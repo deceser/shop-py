@@ -6,12 +6,12 @@ export default function OutputCard({ onSubmit }) {
 
   return (
     <div className="flex flex-col gap-3">
-      <input
+      <textarea
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        onKeyDown={(e) => e.key === 'Enter' && value.trim() && onSubmit(value)}
         placeholder="Введи що виведе код..."
-        className="w-full rounded-xl border-2 border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-slate-500 focus:border-violet-500 focus:outline-none font-mono"
+        rows={4}
+        className="w-full rounded-xl border-2 border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-slate-500 focus:border-violet-500 focus:outline-none font-mono resize-none"
       />
       <motion.button
         whileTap={{ scale: 0.96 }}

@@ -45,12 +45,12 @@ export const useGameStore = create((set, get) => ({
   // shop / cart
   products: PRODUCTS,
   cart: INITIAL_CART,
+  cartLimit: 3,
   addToCart: (productId) =>
     set((s) => {
-      const existing = s.cart.find((i) => i.productId === productId);
-      if (existing) {
-        return { cart: s.cart.map((i) => i.productId === productId ? { ...i, qty: i.qty + 1 } : i) };
-      }
+      if (s.cart.length >= s.cartLimit) return s;
+      if (s.cart.find((i) => i.productId === productId)) return s;
+      if (s.scanned.includes(productId)) return s;
       return { cart: [...s.cart, { productId, qty: 1 }] };
     }),
   removeFromCart: (productId) =>

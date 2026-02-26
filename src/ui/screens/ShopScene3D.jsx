@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import { useGameStore } from '../../game/store';
 
 // ── Layout constants ───────────────────────────────────────────────────────
-const SHELF_Z = [4, 0, -4];
+const SHELF_Z = [5, 2.5, 0, -2.5, -5];
 const SHELF_HALF_W = 5.5;
 const SHELF_D = 0.7;
 const SPEED = 5;
@@ -87,7 +87,7 @@ function makeProductTex(emoji, name, highlighted, done, inCart) {
 }
 
 // ── Shelf product ──────────────────────────────────────────────────────────
-function ShelfProduct({ product, position, highlighted, done, inCart }) {
+function ShelfProduct({ product, position, highlighted, done, inCart, cartFull }) {
   const tex = useMemo(
     () => makeProductTex(product.emoji, product.name, highlighted, done, inCart),
     [product.emoji, product.name, highlighted, done, inCart],
@@ -99,15 +99,16 @@ function ShelfProduct({ product, position, highlighted, done, inCart }) {
         <planeGeometry args={[0.9, 0.9]} />
         <meshBasicMaterial map={tex} transparent side={THREE.DoubleSide} />
       </mesh>
-      {highlighted && (
+      {highlighted && !done && (
         <Html center position={[0, 0.62, 0]} distanceFactor={9} style={{ pointerEvents: 'none' }}>
           <div style={{
-            background: '#7c3aed', color: '#fff', borderRadius: 8,
+            background: cartFull ? '#b45309' : '#7c3aed',
+            color: '#fff', borderRadius: 8,
             padding: '3px 9px', fontSize: 12, fontWeight: 700,
             fontFamily: 'system-ui,sans-serif', whiteSpace: 'nowrap',
-            boxShadow: '0 2px 8px rgba(124,58,237,0.5)',
+            boxShadow: cartFull ? '0 2px 8px rgba(180,83,9,0.5)' : '0 2px 8px rgba(124,58,237,0.5)',
           }}>
-            E — взяти
+            {cartFull ? '🛒 Спочатку до касирші!' : 'E — взяти'}
           </div>
         </Html>
       )}
@@ -477,8 +478,9 @@ function Player({ nearIdRef, onNearChange, productsWithPos, nearCashierRef, onNe
 
 // ── Main ───────────────────────────────────────────────────────────────────
 export default function ShopScene3D() {
-  const { products, cart, addToCart, progress, setScreen, coins } = useGameStore();
-  const cartCount = cart.reduce((s, i) => s + i.qty, 0);
+  const { products, cart, addToCart, progress, setScreen, coins, scanned, cartLimit } = useGameStore();
+  const cartCount = cart.length;
+  const cartFull = cartCount >= cartLimit;
   const [nearId, setNearId] = useState(null);
   const [nearCashier, setNearCashier] = useState(false);
   const nearIdRef = useRef(null);
@@ -498,8 +500,10 @@ export default function ShopScene3D() {
     return () => window.removeEventListener('keydown', onKey);
   }, [addToCart, setScreen]);
 
+  const MAX_PRODUCTS = SHELF_Z.length * 5;
+
   const productsWithPos = useMemo(() =>
-    products.map((p, i) => {
+    products.slice(0, MAX_PRODUCTS).map((p, i) => {
       const row = Math.floor(i / 5);
       const col = i % 5;
       const x = (col - 2) * 2.3;
@@ -507,6 +511,11 @@ export default function ShopScene3D() {
       return { ...p, wp: [x, 1.05, z - 0.05] };
     }),
     [products],
+  );
+
+  const interactableProducts = useMemo(
+    () => productsWithPos.filter((p) => !scanned.includes(p.id)),
+    [productsWithPos, scanned],
   );
 
   const handleNearChange = useCallback((id) => setNearId(id), []);
@@ -534,6 +543,7 @@ export default function ShopScene3D() {
             highlighted={nearId === p.id}
             done={progress[p.cardId]?.status === 'done'}
             inCart={!!cart.find((i) => i.productId === p.id)}
+            cartFull={cartFull}
           />
         ))}
 
@@ -543,7 +553,7 @@ export default function ShopScene3D() {
         <Player
           nearIdRef={nearIdRef}
           onNearChange={handleNearChange}
-          productsWithPos={productsWithPos}
+          productsWithPos={interactableProducts}
           nearCashierRef={nearCashierRef}
           onNearCashierChange={handleNearCashier}
         />

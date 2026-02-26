@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { useGameStore } from '../../game/store';
+import { getGrade, TOTAL_COINS } from '../../data/cards';
 
 export default function ResultOverlay({ result, onContinue }) {
   const { coins } = useGameStore();
@@ -47,8 +48,9 @@ export default function ResultOverlay({ result, onContinue }) {
           </div>
         )}
 
-        <div className="mb-5 text-sm text-slate-400">
-          Всього монет: <span className="text-yellow-300 font-semibold">{coins} 🪙</span>
+        <div className="mb-5 text-sm text-slate-400 space-y-1">
+          <div>Всього монет: <span className="text-yellow-300 font-semibold">{coins} / {TOTAL_COINS} 🪙</span></div>
+          <div>Оцінка: <span className="text-green-400 font-bold text-base">{getGrade(coins)}/12</span></div>
         </div>
 
         <motion.button
