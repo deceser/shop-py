@@ -5,7 +5,7 @@ import ResultOverlay from '../components/ResultOverlay';
 import { useGameStore } from '../../game/store';
 
 export default function CheckoutScreen() {
-  const { setScreen, removeFromCart, addScanned, activeProduct } = useGameStore();
+  const { setScreen, removeFromCart, addScanned, activeProduct, sayInspector } = useGameStore();
   const [result, setResult] = useState(null);
 
   function handleDone(res) {
@@ -13,11 +13,18 @@ export default function CheckoutScreen() {
   }
 
   function handleContinue() {
-    if (result?.isCorrect && activeProduct) {
+    const isCorr = result?.isCorrect;
+    if (isCorr && activeProduct) {
       addScanned(activeProduct.id);
       removeFromCart(activeProduct.id);
     }
     setResult(null);
+    // inspector реагує після повернення на сцену кошика
+    sayInspector(
+      isCorr
+        ? 'Непогано… але дисципліна кульгає.'
+        : 'Незадовільно. Повторіть матеріал.',
+    );
     setScreen('cart');
   }
 

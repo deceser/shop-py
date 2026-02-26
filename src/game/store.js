@@ -80,6 +80,16 @@ export const useGameStore = create((set, get) => ({
   scanned: [],
   addScanned: (productId) => set((s) => ({ scanned: [...s.scanned, productId] })),
 
+  // inspector speech bubble (auto-clears after 5s)
+  inspectorSpeech: null,
+  sayInspector: (line) => {
+    set({ inspectorSpeech: line });
+    setTimeout(
+      () => set((s) => (s.inspectorSpeech === line ? { inspectorSpeech: null } : {})),
+      5000,
+    );
+  },
+
   // helpers
   cartTotal: () => {
     const { cart, products } = get();

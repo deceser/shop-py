@@ -25,22 +25,21 @@ function blockedBy(x, z) {
 }
 
 // ── Textures ───────────────────────────────────────────────────────────────
-function makeTileTexture() {
+function makeSandTexture() {
   const s = 512;
   const cv = document.createElement('canvas');
   cv.width = cv.height = s;
   const ctx = cv.getContext('2d');
-  ctx.fillStyle = '#f8fafc';
+  ctx.fillStyle = '#c8a96e';
   ctx.fillRect(0, 0, s, s);
-  ctx.strokeStyle = '#e2e8f0';
-  ctx.lineWidth = 2;
-  for (let i = 0; i <= s; i += 128) {
-    ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, s); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(s, i); ctx.stroke();
+  ctx.strokeStyle = 'rgba(160,120,60,0.35)';
+  ctx.lineWidth = 1.5;
+  for (let i = 0; i < s; i += 18) {
+    ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(s, i + 4); ctx.stroke();
   }
   const t = new THREE.CanvasTexture(cv);
   t.wrapS = t.wrapT = THREE.RepeatWrapping;
-  t.repeat.set(5, 6);
+  t.repeat.set(4, 5);
   return t;
 }
 
@@ -115,29 +114,80 @@ function ShelfProduct({ product, position, highlighted, done, inCart }) {
   );
 }
 
-// ── Shelf row ──────────────────────────────────────────────────────────────
+// ── Palm tree ──────────────────────────────────────────────────────────────
+function PalmTree({ position }) {
+  return (
+    <group position={position}>
+      <mesh position={[0, 2.2, 0]}>
+        <cylinderGeometry args={[0.13, 0.21, 4.4, 8]} />
+        <meshStandardMaterial color="#8b6914" roughness={0.9} />
+      </mesh>
+      {[0, 1, 2, 3].map((i) => (
+        <mesh
+          key={i}
+          position={[
+            Math.cos((i * Math.PI) / 2) * 0.65,
+            4.3,
+            Math.sin((i * Math.PI) / 2) * 0.65,
+          ]}
+          rotation={[
+            Math.sin((i * Math.PI) / 2) * 0.5,
+            0,
+            -Math.cos((i * Math.PI) / 2) * 0.5,
+          ]}
+        >
+          <boxGeometry args={[0.28, 0.07, 1.5]} />
+          <meshStandardMaterial color="#1e6b1e" roughness={0.8} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+// ── Bamboo market stall ─────────────────────────────────────────────────────
 function ShelfRow({ z }) {
   const w = SHELF_HALF_W * 2;
   return (
     <group position={[0, 0, z]}>
-      <mesh position={[0, 0.1, 0]}>
-        <boxGeometry args={[w + 0.4, 0.2, SHELF_D + 0.1]} />
-        <meshStandardMaterial color="#e2e8f0" roughness={0.7} />
+      {/* wooden base platform */}
+      <mesh position={[0, 0.09, 0]}>
+        <boxGeometry args={[w + 0.4, 0.18, SHELF_D + 0.1]} />
+        <meshStandardMaterial color="#7a5230" roughness={0.9} />
       </mesh>
-      <mesh position={[0, 0.55, 0]}>
-        <boxGeometry args={[w + 0.4, 0.06, SHELF_D + 0.1]} />
-        <meshStandardMaterial color="#cbd5e1" roughness={0.5} />
-      </mesh>
-      <mesh position={[0, 1.1, SHELF_D / 2 - 0.02]}>
-        <boxGeometry args={[w + 0.4, 1.1, 0.04]} />
-        <meshStandardMaterial color="#f1f5f9" roughness={0.9} />
-      </mesh>
-      {Array.from({ length: 6 }).map((_, i) => (
-        <mesh key={i} position={[-SHELF_HALF_W + i * (w / 5) + 0.2, 0.9, 0]}>
-          <boxGeometry args={[0.05, 1.8, SHELF_D + 0.1]} />
-          <meshStandardMaterial color="#cbd5e1" />
+      {/* plank grooves on base */}
+      {Array.from({ length: 8 }).map((_, i) => (
+        <mesh key={`plank-${i}`} position={[-SHELF_HALF_W + i * (w / 7) + 0.3, 0.176, 0]}>
+          <boxGeometry args={[0.04, 0.01, SHELF_D + 0.1]} />
+          <meshStandardMaterial color="#5c3a1e" />
         </mesh>
       ))}
+      {/* bamboo shelf surface */}
+      <mesh position={[0, 0.52, 0]}>
+        <boxGeometry args={[w + 0.4, 0.07, SHELF_D + 0.1]} />
+        <meshStandardMaterial color="#c8a848" roughness={0.6} />
+      </mesh>
+      {/* thatched back wall */}
+      <mesh position={[0, 1.05, SHELF_D / 2 - 0.02]}>
+        <boxGeometry args={[w + 0.4, 1.1, 0.06]} />
+        <meshStandardMaterial color="#9a7a4e" roughness={1} />
+      </mesh>
+      {/* bamboo vertical posts */}
+      {Array.from({ length: 6 }).map((_, i) => (
+        <mesh key={`post-${i}`} position={[-SHELF_HALF_W + i * (w / 5) + 0.2, 0.9, 0]}>
+          <cylinderGeometry args={[0.038, 0.042, 1.8, 6]} />
+          <meshStandardMaterial color="#a07828" roughness={0.8} />
+        </mesh>
+      ))}
+      {/* thatched awning */}
+      <mesh position={[0, 2.0, -0.18]} rotation={[0.18, 0, 0]}>
+        <boxGeometry args={[w + 0.5, 0.1, SHELF_D + 0.9]} />
+        <meshStandardMaterial color="#8b7355" roughness={1} />
+      </mesh>
+      {/* awning front edge */}
+      <mesh position={[0, 1.87, -SHELF_D / 2 - 0.28]}>
+        <boxGeometry args={[w + 0.5, 0.15, 0.08]} />
+        <meshStandardMaterial color="#6b5535" roughness={1} />
+      </mesh>
     </group>
   );
 }
@@ -235,108 +285,122 @@ function CashierNPC({ nearCashier }) {
   );
 }
 
-// ── Cash register on counter ───────────────────────────────────────────────
+// ── Treasure chest on bar ──────────────────────────────────────────────────
 function CashRegister() {
   return (
     <group position={[-1.2, 1.15, -8]}>
-      {/* base */}
-      <mesh position={[0, 0.15, 0]}>
-        <boxGeometry args={[0.6, 0.3, 0.5]} />
-        <meshStandardMaterial color="#334155" metalness={0.4} roughness={0.5} />
+      {/* chest body */}
+      <mesh position={[0, 0.18, 0]}>
+        <boxGeometry args={[0.62, 0.36, 0.5]} />
+        <meshStandardMaterial color="#5c3d1a" roughness={0.85} />
       </mesh>
-      {/* screen */}
-      <mesh position={[0, 0.42, -0.1]} rotation={[-0.3, 0, 0]}>
-        <boxGeometry args={[0.5, 0.32, 0.05]} />
-        <meshStandardMaterial color="#0f172a" emissive="#3b82f6" emissiveIntensity={0.6} />
+      {/* gold horizontal trim */}
+      {[0.16, -0.16].map((y) => (
+        <mesh key={y} position={[0, 0.18 + y, 0]}>
+          <boxGeometry args={[0.64, 0.04, 0.52]} />
+          <meshStandardMaterial color="#c9a227" metalness={0.7} roughness={0.3} />
+        </mesh>
+      ))}
+      {/* gold vertical trim */}
+      {[-0.28, 0.28].map((x) => (
+        <mesh key={x} position={[x, 0.18, 0]}>
+          <boxGeometry args={[0.04, 0.38, 0.52]} />
+          <meshStandardMaterial color="#c9a227" metalness={0.7} roughness={0.3} />
+        </mesh>
+      ))}
+      {/* open lid */}
+      <mesh position={[0, 0.4, 0.18]} rotation={[-0.6, 0, 0]}>
+        <boxGeometry args={[0.62, 0.06, 0.5]} />
+        <meshStandardMaterial color="#5c3d1a" roughness={0.85} />
       </mesh>
-      {/* keys */}
-      {[-0.15, 0, 0.15].map((x) =>
-        [-0.06, 0.06].map((z) => (
-          <mesh key={`${x}-${z}`} position={[x, 0.31, z + 0.08]}>
-            <boxGeometry args={[0.08, 0.04, 0.07]} />
-            <meshStandardMaterial color="#475569" />
-          </mesh>
-        ))
-      )}
+      {/* glowing gold inside */}
+      <mesh position={[0, 0.3, -0.04]}>
+        <boxGeometry args={[0.54, 0.14, 0.42]} />
+        <meshStandardMaterial color="#fbbf24" emissive="#fbbf24" emissiveIntensity={0.6} />
+      </mesh>
+      {/* lock */}
+      <mesh position={[0, 0.18, -0.27]}>
+        <boxGeometry args={[0.1, 0.12, 0.04]} />
+        <meshStandardMaterial color="#c9a227" metalness={0.8} roughness={0.2} />
+      </mesh>
     </group>
   );
 }
 
 // ── Store environment ──────────────────────────────────────────────────────
 function StoreEnv() {
-  const floorTex = useMemo(() => makeTileTexture(), []);
+  const sandTex = useMemo(() => makeSandTexture(), []);
 
   return (
     <>
-      {/* floor */}
+      {/* ocean */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.08, 0]}>
+        <planeGeometry args={[60, 60]} />
+        <meshStandardMaterial color="#1a78c2" transparent opacity={0.88} />
+      </mesh>
+
+      {/* sand island floor */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
         <planeGeometry args={[20, 22]} />
-        <meshStandardMaterial map={floorTex} />
+        <meshStandardMaterial map={sandTex} />
       </mesh>
 
-      {/* ceiling */}
-      <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 4.5, 0]}>
-        <planeGeometry args={[20, 22]} />
-        <meshStandardMaterial color="#f8fafc" />
-      </mesh>
-
-      {/* walls */}
+      {/* palm trees at island edges */}
       {[
-        { p: [0, 2.2, -9.5], r: [0, 0, 0], s: [20, 4.5] },
-        { p: [0, 2.2, 9.5], r: [0, Math.PI, 0], s: [20, 4.5] },
-        { p: [-9.5, 2.2, 0], r: [0, Math.PI / 2, 0], s: [22, 4.5] },
-        { p: [9.5, 2.2, 0], r: [0, -Math.PI / 2, 0], s: [22, 4.5] },
-      ].map((w, i) => (
-        <mesh key={i} position={w.p} rotation={w.r}>
-          <planeGeometry args={w.s} />
-          <meshStandardMaterial color="#f1f5f9" />
-        </mesh>
-      ))}
-
-      {/* fluorescent lights */}
-      {[-3.5, 0, 3.5].map((x) => (
-        <mesh key={x} position={[x, 4.4, 0]}>
-          <boxGeometry args={[0.22, 0.06, 9]} />
-          <meshStandardMaterial color="#fff" emissive="#e0f2fe" emissiveIntensity={0.8} />
-        </mesh>
+        [8.5, 0, 8], [-8.5, 0, 8], [8.5, 0, -8.5],
+        [-8.5, 0, -8.5], [0, 0, 8.8],
+      ].map(([x, y, z], i) => (
+        <PalmTree key={i} position={[x, y, z]} />
       ))}
 
       {/* shelf rows */}
       {SHELF_Z.map((z) => <ShelfRow key={z} z={z} />)}
 
-      {/* checkout counter */}
+      {/* wooden island bar */}
       <mesh position={[0, 0.55, -8]}>
         <boxGeometry args={[5, 1.1, 1.2]} />
-        <meshStandardMaterial color="#94a3b8" roughness={0.5} metalness={0.2} />
+        <meshStandardMaterial color="#7a5230" roughness={0.9} />
       </mesh>
-      <mesh position={[0, 1.12, -8]}>
-        <boxGeometry args={[5, 0.06, 1.2]} />
-        <meshStandardMaterial color="#64748b" roughness={0.3} metalness={0.4} />
+      {/* tabletop planks */}
+      <mesh position={[0, 1.115, -8]}>
+        <boxGeometry args={[5, 0.07, 1.2]} />
+        <meshStandardMaterial color="#a07848" roughness={0.7} />
       </mesh>
-      {/* counter dividers */}
-      {[-2.2, 2.2].map((x) => (
-        <mesh key={x} position={[x, 1.3, -8]}>
-          <boxGeometry args={[0.06, 0.4, 1.2]} />
-          <meshStandardMaterial color="#475569" />
+      {/* plank grooves on top */}
+      {[-1.5, -0.8, -0.1, 0.6, 1.3].map((x) => (
+        <mesh key={x} position={[x, 1.152, -8]}>
+          <boxGeometry args={[0.05, 0.01, 1.2]} />
+          <meshStandardMaterial color="#5c3a1e" />
         </mesh>
       ))}
-      {/* conveyor belt on counter */}
-      <mesh position={[0.6, 1.16, -8]}>
-        <boxGeometry args={[2.2, 0.03, 0.9]} />
-        <meshStandardMaterial color="#334155" roughness={0.8} />
-      </mesh>
+      {/* bamboo post dividers */}
+      {[-2.2, 2.2].map((x) => (
+        <mesh key={x} position={[x, 1.32, -8]}>
+          <cylinderGeometry args={[0.038, 0.042, 0.44, 6]} />
+          <meshStandardMaterial color="#a07828" roughness={0.8} />
+        </mesh>
+      ))}
+      {/* dock planks display surface */}
+      {Array.from({ length: 5 }).map((_, i) => (
+        <mesh key={i} position={[-0.6 + i * 0.4, 1.162, -8]}>
+          <boxGeometry args={[0.32, 0.02, 0.9]} />
+          <meshStandardMaterial color={i % 2 === 0 ? '#8b6533' : '#a07848'} roughness={0.8} />
+        </mesh>
+      ))}
 
-      {/* entrance mat */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.005, 8.2]}>
-        <planeGeometry args={[5, 1.6]} />
-        <meshStandardMaterial color="#7c3aed" />
-      </mesh>
+      {/* entrance dock planks */}
+      {Array.from({ length: 5 }).map((_, i) => (
+        <mesh key={i} rotation={[-Math.PI / 2, 0, 0]} position={[-1.8 + i * 0.9, 0.005, 8.2]}>
+          <planeGeometry args={[0.78, 1.6]} />
+          <meshStandardMaterial color={i % 2 === 0 ? '#7a5230' : '#a07848'} />
+        </mesh>
+      ))}
 
-      {/* aisle arrows on floor */}
+      {/* sandy footpath markers */}
       {[6, 2, -2, -6].map((z) => (
         <mesh key={z} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.003, z]}>
           <planeGeometry args={[0.18, 1.8]} />
-          <meshStandardMaterial color="#c7d2fe" opacity={0.7} transparent />
+          <meshStandardMaterial color="#d4a574" opacity={0.6} transparent />
         </mesh>
       ))}
     </>
@@ -517,10 +581,10 @@ export default function ShopScene3D() {
       <Canvas
         camera={{ position: [0, 11, 14], fov: 55 }}
         gl={{ antialias: true }}
-        style={{ background: '#e8edf2' }}
+        style={{ background: '#87ceeb' }}
       >
         <ambientLight intensity={2.8} />
-        <directionalLight position={[0, 10, 2]} intensity={1.2} />
+        <directionalLight position={[5, 14, 2]} intensity={1.4} color="#fff9e0" />
         <pointLight position={[-5, 5, 5]} intensity={0.4} color="#fff" />
         <pointLight position={[5, 5, -5]} intensity={0.4} color="#fff" />
 
@@ -561,7 +625,7 @@ export default function ShopScene3D() {
           padding: '7px 14px', color: '#1e293b',
           fontFamily: 'system-ui,sans-serif', fontSize: 15, fontWeight: 700,
         }}>
-          🛒 Python Market
+          🏝️ Python Island
         </div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <div style={{
@@ -570,7 +634,7 @@ export default function ShopScene3D() {
             padding: '7px 14px', color: '#92400e',
             fontFamily: 'system-ui,sans-serif', fontSize: 14, fontWeight: 600,
           }}>
-            🪙 {coins}
+            🐚 {coins}
           </div>
           {cartCount > 0 && (
             <div style={{
