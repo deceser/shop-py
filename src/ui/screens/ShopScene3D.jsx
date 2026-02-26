@@ -10,7 +10,9 @@ const SHELF_HALF_W = 5.5;
 const SHELF_D = 0.7;
 const SPEED = 5;
 const INTERACT_R = 1.8;
+const CASHIER_R = 2.4;
 const PLAYER_R = 0.35;
+const CASHIER_POS = [0, 0, -7.5];
 
 const SHELF_AABBS = SHELF_Z.map((z) => ({
   xMin: -SHELF_HALF_W, xMax: SHELF_HALF_W,
@@ -140,6 +142,126 @@ function ShelfRow({ z }) {
   );
 }
 
+// ── Cashier NPC ────────────────────────────────────────────────────────────
+function CashierNPC({ nearCashier }) {
+  const bodyBob = useRef(0);
+  const groupRef = useRef();
+
+  useFrame((_, dt) => {
+    bodyBob.current += dt * 1.2;
+    if (groupRef.current) {
+      groupRef.current.position.y = Math.sin(bodyBob.current) * 0.04;
+    }
+  });
+
+  return (
+    <group position={[0.6, 0, -9.1]} rotation={[0, Math.PI, 0]}>
+      <group ref={groupRef}>
+        {/* legs */}
+        <mesh position={[-0.12, 0.28, 0]}>
+          <boxGeometry args={[0.18, 0.56, 0.18]} />
+          <meshStandardMaterial color="#1e3a5f" />
+        </mesh>
+        <mesh position={[0.12, 0.28, 0]}>
+          <boxGeometry args={[0.18, 0.56, 0.18]} />
+          <meshStandardMaterial color="#1e3a5f" />
+        </mesh>
+        {/* uniform body */}
+        <mesh position={[0, 0.78, 0]}>
+          <boxGeometry args={[0.5, 0.5, 0.3]} />
+          <meshStandardMaterial color="#16a34a" />
+        </mesh>
+        {/* arms */}
+        <mesh position={[-0.36, 0.78, 0]}>
+          <boxGeometry args={[0.18, 0.44, 0.18]} />
+          <meshStandardMaterial color="#16a34a" />
+        </mesh>
+        <mesh position={[0.36, 0.78, 0]}>
+          <boxGeometry args={[0.18, 0.44, 0.18]} />
+          <meshStandardMaterial color="#16a34a" />
+        </mesh>
+        {/* head */}
+        <mesh position={[0, 1.25, 0]}>
+          <boxGeometry args={[0.44, 0.44, 0.44]} />
+          <meshStandardMaterial color="#fde68a" />
+        </mesh>
+        {/* hair */}
+        <mesh position={[0, 1.5, 0.05]}>
+          <boxGeometry args={[0.46, 0.14, 0.48]} />
+          <meshStandardMaterial color="#92400e" />
+        </mesh>
+        <mesh position={[0, 1.25, 0.26]}>
+          <boxGeometry args={[0.44, 0.44, 0.06]} />
+          <meshStandardMaterial color="#92400e" />
+        </mesh>
+        {/* eyes */}
+        <mesh position={[-0.1, 1.27, -0.23]}>
+          <boxGeometry args={[0.08, 0.08, 0.02]} />
+          <meshStandardMaterial color="#1e293b" />
+        </mesh>
+        <mesh position={[0.1, 1.27, -0.23]}>
+          <boxGeometry args={[0.08, 0.08, 0.02]} />
+          <meshStandardMaterial color="#1e293b" />
+        </mesh>
+        {/* smile */}
+        <mesh position={[0, 1.17, -0.23]}>
+          <boxGeometry args={[0.12, 0.04, 0.02]} />
+          <meshStandardMaterial color="#dc2626" />
+        </mesh>
+        {/* cap */}
+        <mesh position={[0, 1.52, -0.1]}>
+          <boxGeometry args={[0.48, 0.08, 0.36]} />
+          <meshStandardMaterial color="#15803d" />
+        </mesh>
+      </group>
+
+      {/* hint above cashier */}
+      <Html position={[0, 2.2, 0]} center distanceFactor={10} style={{ pointerEvents: 'none' }}>
+        <div style={{
+          background: nearCashier ? '#7c3aed' : 'rgba(255,255,255,0.85)',
+          backdropFilter: 'blur(6px)',
+          color: nearCashier ? '#fff' : '#475569',
+          border: `1px solid ${nearCashier ? '#7c3aed' : '#e2e8f0'}`,
+          borderRadius: 8, padding: '3px 10px',
+          fontSize: nearCashier ? 12 : 11,
+          fontFamily: 'system-ui,sans-serif', fontWeight: 700,
+          whiteSpace: 'nowrap', transition: 'all 0.2s',
+          boxShadow: nearCashier ? '0 0 12px rgba(124,58,237,0.6)' : 'none',
+        }}>
+          {nearCashier ? 'E — до кошика 🛒' : '👩‍💼 Касирша'}
+        </div>
+      </Html>
+    </group>
+  );
+}
+
+// ── Cash register on counter ───────────────────────────────────────────────
+function CashRegister() {
+  return (
+    <group position={[-1.2, 1.15, -8]}>
+      {/* base */}
+      <mesh position={[0, 0.15, 0]}>
+        <boxGeometry args={[0.6, 0.3, 0.5]} />
+        <meshStandardMaterial color="#334155" metalness={0.4} roughness={0.5} />
+      </mesh>
+      {/* screen */}
+      <mesh position={[0, 0.42, -0.1]} rotation={[-0.3, 0, 0]}>
+        <boxGeometry args={[0.5, 0.32, 0.05]} />
+        <meshStandardMaterial color="#0f172a" emissive="#3b82f6" emissiveIntensity={0.6} />
+      </mesh>
+      {/* keys */}
+      {[-0.15, 0, 0.15].map((x) =>
+        [-0.06, 0.06].map((z) => (
+          <mesh key={`${x}-${z}`} position={[x, 0.31, z + 0.08]}>
+            <boxGeometry args={[0.08, 0.04, 0.07]} />
+            <meshStandardMaterial color="#475569" />
+          </mesh>
+        ))
+      )}
+    </group>
+  );
+}
+
 // ── Store environment ──────────────────────────────────────────────────────
 function StoreEnv() {
   const floorTex = useMemo(() => makeTileTexture(), []);
@@ -184,12 +306,24 @@ function StoreEnv() {
 
       {/* checkout counter */}
       <mesh position={[0, 0.55, -8]}>
-        <boxGeometry args={[4.5, 1.1, 1]} />
+        <boxGeometry args={[5, 1.1, 1.2]} />
         <meshStandardMaterial color="#94a3b8" roughness={0.5} metalness={0.2} />
       </mesh>
       <mesh position={[0, 1.12, -8]}>
-        <boxGeometry args={[4.5, 0.06, 1]} />
+        <boxGeometry args={[5, 0.06, 1.2]} />
         <meshStandardMaterial color="#64748b" roughness={0.3} metalness={0.4} />
+      </mesh>
+      {/* counter dividers */}
+      {[-2.2, 2.2].map((x) => (
+        <mesh key={x} position={[x, 1.3, -8]}>
+          <boxGeometry args={[0.06, 0.4, 1.2]} />
+          <meshStandardMaterial color="#475569" />
+        </mesh>
+      ))}
+      {/* conveyor belt on counter */}
+      <mesh position={[0.6, 1.16, -8]}>
+        <boxGeometry args={[2.2, 0.03, 0.9]} />
+        <meshStandardMaterial color="#334155" roughness={0.8} />
       </mesh>
 
       {/* entrance mat */}
@@ -210,7 +344,7 @@ function StoreEnv() {
 }
 
 // ── Player ─────────────────────────────────────────────────────────────────
-function Player({ nearIdRef, onNearChange, productsWithPos }) {
+function Player({ nearIdRef, onNearChange, productsWithPos, nearCashierRef, onNearCashierChange }) {
   const { camera } = useThree();
   const groupRef = useRef();
   const keys = useRef(new Set());
@@ -267,9 +401,19 @@ function Player({ nearIdRef, onNearChange, productsWithPos }) {
       if (d < nearDist) { nearDist = d; nearId = p.id; }
     });
 
-    if (nearId !== nearIdRef.current) {
-      nearIdRef.current = nearId;
-      onNearChange(nearId);
+    // cashier proximity (проверяем первой — имеет приоритет)
+    const distCashier = Math.hypot(pos.x - CASHIER_POS[0], pos.z - CASHIER_POS[2]);
+    const isNearCashier = distCashier < CASHIER_R;
+    if (isNearCashier !== nearCashierRef.current) {
+      nearCashierRef.current = isNearCashier;
+      onNearCashierChange(isNearCashier);
+    }
+
+    // товар подсвечивается только если не у кассы
+    const resolvedNearId = isNearCashier ? null : nearId;
+    if (resolvedNearId !== nearIdRef.current) {
+      nearIdRef.current = resolvedNearId;
+      onNearChange(resolvedNearId);
     }
   });
 
@@ -336,18 +480,23 @@ export default function ShopScene3D() {
   const { products, cart, addToCart, progress, setScreen, coins } = useGameStore();
   const cartCount = cart.reduce((s, i) => s + i.qty, 0);
   const [nearId, setNearId] = useState(null);
+  const [nearCashier, setNearCashier] = useState(false);
   const nearIdRef = useRef(null);
+  const nearCashierRef = useRef(false);
 
-  // E / Space key → pick up
+  // E / Space key → pick up product OR go to cashier
   useEffect(() => {
     function onKey(e) {
-      if ((e.key === 'e' || e.key === 'E' || e.key === ' ') && nearIdRef.current) {
+      if (e.key !== 'e' && e.key !== 'E' && e.key !== ' ') return;
+      if (nearCashierRef.current) {
+        setScreen('cart');
+      } else if (nearIdRef.current) {
         addToCart(nearIdRef.current);
       }
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [addToCart]);
+  }, [addToCart, setScreen]);
 
   const productsWithPos = useMemo(() =>
     products.map((p, i) => {
@@ -361,6 +510,7 @@ export default function ShopScene3D() {
   );
 
   const handleNearChange = useCallback((id) => setNearId(id), []);
+  const handleNearCashier = useCallback((v) => setNearCashier(v), []);
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
@@ -387,10 +537,15 @@ export default function ShopScene3D() {
           />
         ))}
 
+        <CashierNPC nearCashier={nearCashier} />
+        <CashRegister />
+
         <Player
           nearIdRef={nearIdRef}
           onNearChange={handleNearChange}
           productsWithPos={productsWithPos}
+          nearCashierRef={nearCashierRef}
+          onNearCashierChange={handleNearCashier}
         />
       </Canvas>
 
@@ -408,7 +563,7 @@ export default function ShopScene3D() {
         }}>
           🛒 Python Market
         </div>
-        <div style={{ display: 'flex', gap: 10 }}>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <div style={{
             background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)',
             border: '1px solid #e2e8f0', borderRadius: 12,
@@ -418,19 +573,14 @@ export default function ShopScene3D() {
             🪙 {coins}
           </div>
           {cartCount > 0 && (
-            <button
-              onClick={() => setScreen('cart')}
-              style={{
-                pointerEvents: 'auto', cursor: 'pointer',
-                background: '#7c3aed', border: 'none',
-                borderRadius: 12, padding: '7px 18px',
-                color: '#fff', fontFamily: 'system-ui,sans-serif',
-                fontSize: 14, fontWeight: 700,
-                boxShadow: '0 0 18px rgba(124,58,237,0.45)',
-              }}
-            >
-              🛒 Кошик ({cartCount})
-            </button>
+            <div style={{
+              background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)',
+              border: '1px solid #e2e8f0', borderRadius: 12,
+              padding: '7px 14px', color: '#475569',
+              fontFamily: 'system-ui,sans-serif', fontSize: 13,
+            }}>
+              🛒 {cartCount} — підійди до касирші
+            </div>
           )}
         </div>
       </div>
