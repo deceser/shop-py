@@ -28,6 +28,8 @@ export default function CodeCard({ card, onSubmit }) {
         <textarea
           value={value}
           onChange={(e) => setValue(e.target.value)}
+          onPaste={(e) => e.preventDefault()}
+          onContextMenu={(e) => e.preventDefault()}
           spellCheck={false}
           rows={6}
           placeholder="# Напиши код тут..."

@@ -1,28 +1,27 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { supabase } from '../../supabase/client';
+import { STUDENTS } from '../../data/students';
+import { loginStudent } from '../../supabase/client';
 
 export default function LoginScreen({ onLogin }) {
-  const [mode, setMode] = useState('anon');
-  const [email, setEmail] = useState('');
-  const [username, setUsername] = useState('');
+  const [query, setQuery] = useState('');
+  const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
-  // loading/error used only for email mode
 
-  function handleAnon() {
-    onLogin({ id: 'local-' + Date.now() }, username || 'Гравець');
-  }
+  const filtered = query.length >= 1
+    ? STUDENTS.filter((s) =>
+        `${s.firstName} ${s.lastName}`.toLowerCase().includes(query.toLowerCase()),
+      )
+    : STUDENTS;
 
-  async function handleMagic() {
-    if (!email) return;
+  async function handleLogin() {
+    if (!selected) return;
     setLoading(true);
     setError('');
     try {
-      const { error: e } = await supabase.auth.signInWithOtp({ email });
-      if (e) throw e;
-      setSent(true);
+      const u = await loginStudent(selected.firstName, selected.lastName, selected.gender);
+      onLogin(u);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -40,69 +39,45 @@ export default function LoginScreen({ onLogin }) {
         <div className="mb-6 text-center">
           <div className="text-5xl mb-3">🛒</div>
           <h1 className="text-2xl font-bold text-white">Python Market</h1>
-          <p className="text-sm text-slate-400 mt-1">Навчись Python, купуючи продукти</p>
+          <p className="text-sm text-slate-400 mt-1">Оберіть своє ім&apos;я зі списку</p>
         </div>
 
-        <div className="mb-4 flex rounded-xl bg-slate-700/50 p-1">
-          {['anon', 'email'].map((m) => (
-            <button
-              key={m}
-              onClick={() => setMode(m)}
-              className={`flex-1 rounded-lg py-2 text-sm font-medium transition-colors
-                ${mode === m ? 'bg-violet-600 text-white' : 'text-slate-400 hover:text-white'}`}
-            >
-              {m === 'anon' ? 'Швидкий старт' : 'Email'}
-            </button>
-          ))}
+        <div className="flex flex-col gap-3">
+          <input
+            value={query}
+            onChange={(e) => { setQuery(e.target.value); setSelected(null); }}
+            placeholder="Пошук за ім'ям..."
+            className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-slate-500 focus:border-violet-500 focus:outline-none"
+          />
+
+          <div className="max-h-52 overflow-y-auto flex flex-col gap-1 rounded-xl border border-white/10 bg-white/5 p-2">
+            {filtered.map((s) => {
+              const isSelected =
+                selected?.firstName === s.firstName && selected?.lastName === s.lastName;
+              return (
+                <button
+                  key={`${s.firstName}-${s.lastName}`}
+                  onClick={() => setSelected(s)}
+                  className={`rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors
+                    ${isSelected ? 'bg-violet-600 text-white' : 'text-slate-300 hover:bg-white/10'}`}
+                >
+                  {s.gender === 'female' ? '👧' : '👦'} {s.firstName} {s.lastName}
+                </button>
+              );
+            })}
+          </div>
+
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={handleLogin}
+            disabled={!selected || loading}
+            className="rounded-xl bg-violet-600 py-3 font-semibold text-white hover:bg-violet-500 disabled:opacity-50 transition-colors"
+          >
+            {loading ? 'Завантаження...' : 'Грати'}
+          </motion.button>
         </div>
 
-        {mode === 'anon' && (
-          <div className="flex flex-col gap-3">
-            <input
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Твоє ім'я (необов'язково)"
-              className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-slate-500 focus:border-violet-500 focus:outline-none"
-            />
-        <motion.button
-          whileTap={{ scale: 0.97 }}
-          onClick={handleAnon}
-          className="rounded-xl bg-violet-600 py-3 font-semibold text-white hover:bg-violet-500 transition-colors"
-        >
-          Грати
-        </motion.button>
-          </div>
-        )}
-
-        {mode === 'email' && !sent && (
-          <div className="flex flex-col gap-3">
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="your@email.com"
-              className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-slate-500 focus:border-violet-500 focus:outline-none"
-            />
-            <motion.button
-              whileTap={{ scale: 0.97 }}
-              onClick={handleMagic}
-              disabled={loading || !email}
-              className="rounded-xl bg-violet-600 py-3 font-semibold text-white hover:bg-violet-500 disabled:opacity-50 transition-colors"
-            >
-              {loading ? 'Надсилаю...' : 'Надіслати магічне посилання'}
-            </motion.button>
-          </div>
-        )}
-
-        {sent && (
-          <div className="rounded-xl bg-green-900/40 border border-green-700/50 p-4 text-center text-green-300 text-sm">
-            Перевір пошту! Натисни на посилання, щоб увійти.
-          </div>
-        )}
-
-        {error && (
-          <p className="mt-3 text-center text-sm text-red-400">{error}</p>
-        )}
+        {error && <p className="mt-3 text-center text-sm text-red-400">{error}</p>}
       </motion.div>
     </div>
   );

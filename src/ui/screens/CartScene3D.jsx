@@ -71,7 +71,7 @@ function makeCartTex(emoji, name, qty, done, hovered) {
 }
 
 // ── Belt product card ──────────────────────────────────────────────────────
-function BeltProduct({ product, qty, position, done, onScan }) {
+function BeltProduct({ product, qty, position, done, onScan, onRemove, modalOpen }) {
   const [hovered, setHovered] = useState(false);
   const mesh = useRef();
 
@@ -97,16 +97,19 @@ function BeltProduct({ product, qty, position, done, onScan }) {
         <planeGeometry args={[1.05, 1.05]} />
         <meshBasicMaterial map={tex} transparent side={THREE.DoubleSide} />
       </mesh>
-      {hovered && (
-        <Html center position={[0, 0.68, 0]} distanceFactor={9} style={{ pointerEvents: 'none' }}>
-          <div style={{
-            background: '#7c3aed', color: '#fff', borderRadius: 8,
-            padding: '3px 10px', fontSize: 12, fontWeight: 700,
-            fontFamily: 'system-ui,sans-serif', whiteSpace: 'nowrap',
-            boxShadow: '0 2px 10px rgba(124,58,237,0.5)',
-          }}>
-            Натисни — відповісти
-          </div>
+      {!modalOpen && (
+        <Html center position={[-0.62, 0.62, 0]} distanceFactor={9}>
+          <button
+            onClick={(e) => { e.stopPropagation(); onRemove(product.id); }}
+            style={{
+              background: '#ef4444', color: '#fff', border: 'none', borderRadius: '50%',
+              width: 22, height: 22, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 2px 6px rgba(239,68,68,0.6)', lineHeight: 1,
+            }}
+          >
+            ✕
+          </button>
         </Html>
       )}
     </Billboard>
@@ -290,8 +293,9 @@ function StoreEnv() {
 
 // ── Main ───────────────────────────────────────────────────────────────────
 export default function CartScene3D() {
-  const { cart, products, progress, openCheckout, setScreen, cartTotal, coins } = useGameStore();
-  const total = cartTotal();
+  const { cart, products, progress, screen, openCheckout, removeFromCart, setScreen, coins } = useGameStore();
+  const modalOpen = screen === 'checkout';
+
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
@@ -335,6 +339,8 @@ export default function CartScene3D() {
               position={[x, 1.75, 0]}
               done={done}
               onScan={openCheckout}
+              onRemove={removeFromCart}
+              modalOpen={modalOpen}
             />
           );
         })}
@@ -367,14 +373,6 @@ export default function CartScene3D() {
             fontFamily: 'system-ui,sans-serif', fontSize: 14, fontWeight: 600,
           }}>
             🪙 {coins}
-          </div>
-          <div style={{
-            background: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(8px)',
-            border: '1px solid #e2e8f0', borderRadius: 12,
-            padding: '8px 14px', color: '#1e293b',
-            fontFamily: 'system-ui,sans-serif', fontSize: 14, fontWeight: 600,
-          }}>
-            Разом: {total} ₴
           </div>
         </div>
       </div>

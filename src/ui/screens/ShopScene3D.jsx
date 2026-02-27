@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import { useGameStore } from '../../game/store';
 
 // ── Layout constants ───────────────────────────────────────────────────────
-const SHELF_Z = [5, 2.5, 0, -2.5, -5];
+const SHELF_Z = [5, 2.5, 0, -2, -4];
 const SHELF_HALF_W = 5.5;
 const SHELF_D = 0.7;
 const SPEED = 5;
@@ -20,7 +20,10 @@ const SHELF_AABBS = SHELF_Z.map((z) => ({
   zMax: z + SHELF_D / 2 + PLAYER_R,
 }));
 
+const COUNTER_AABB = { xMin: -2.5 - PLAYER_R, xMax: 2.5 + PLAYER_R, zMin: -8.6 - PLAYER_R, zMax: -7.4 + PLAYER_R };
+
 function blockedBy(x, z) {
+  if (x > COUNTER_AABB.xMin && x < COUNTER_AABB.xMax && z > COUNTER_AABB.zMin && z < COUNTER_AABB.zMax) return true;
   return SHELF_AABBS.some((s) => x > s.xMin && x < s.xMax && z > s.zMin && z < s.zMax);
 }
 
@@ -144,7 +147,7 @@ function ShelfRow({ z }) {
 }
 
 // ── Cashier NPC ────────────────────────────────────────────────────────────
-function CashierNPC({ nearCashier }) {
+function CashierNPC({ nearCashier, cartEmpty }) {
   const bodyBob = useRef(0);
   const groupRef = useRef();
 
@@ -229,7 +232,7 @@ function CashierNPC({ nearCashier }) {
           whiteSpace: 'nowrap', transition: 'all 0.2s',
           boxShadow: nearCashier ? '0 0 12px rgba(124,58,237,0.6)' : 'none',
         }}>
-          {nearCashier ? 'E — до кошика 🛒' : '👩‍💼 Касирша'}
+          {nearCashier ? (cartEmpty ? '🛒 Спочатку візьми товари!' : 'E — до кошика 🛒') : '👩‍💼 Касирша'}
         </div>
       </Html>
     </group>
@@ -345,7 +348,10 @@ function StoreEnv() {
 }
 
 // ── Player ─────────────────────────────────────────────────────────────────
-function Player({ nearIdRef, onNearChange, productsWithPos, nearCashierRef, onNearCashierChange }) {
+function Player({ nearIdRef, onNearChange, productsWithPos, nearCashierRef, onNearCashierChange, gender, displayName }) {
+  const bodyColor = gender === 'female' ? '#ec4899' : '#3b82f6';
+  const legColor = gender === 'female' ? '#be185d' : '#1d4ed8';
+  const hairColor = gender === 'female' ? '#f472b6' : '#92400e';
   const { camera } = useThree();
   const groupRef = useRef();
   const keys = useRef(new Set());
@@ -425,33 +431,45 @@ function Player({ nearIdRef, onNearChange, productsWithPos, nearCashierRef, onNe
       {/* left leg */}
       <mesh position={[-0.13, 0.28, 0]}>
         <boxGeometry args={[0.18, 0.56, 0.18]} />
-        <meshStandardMaterial color="#1d4ed8" />
+        <meshStandardMaterial color={legColor} />
       </mesh>
       {/* right leg */}
       <mesh position={[0.13, 0.28, 0]}>
         <boxGeometry args={[0.18, 0.56, 0.18]} />
-        <meshStandardMaterial color="#1d4ed8" />
+        <meshStandardMaterial color={legColor} />
       </mesh>
       {/* body */}
       <mesh position={[0, 0.78, 0]}>
         <boxGeometry args={[0.5, 0.5, 0.3]} />
-        <meshStandardMaterial color="#3b82f6" />
+        <meshStandardMaterial color={bodyColor} />
       </mesh>
       {/* left arm */}
       <mesh position={[-0.36, 0.78, 0]}>
         <boxGeometry args={[0.18, 0.44, 0.18]} />
-        <meshStandardMaterial color="#3b82f6" />
+        <meshStandardMaterial color={bodyColor} />
       </mesh>
       {/* right arm */}
       <mesh position={[0.36, 0.78, 0]}>
         <boxGeometry args={[0.18, 0.44, 0.18]} />
-        <meshStandardMaterial color="#3b82f6" />
+        <meshStandardMaterial color={bodyColor} />
       </mesh>
       {/* head */}
       <mesh position={[0, 1.25, 0]}>
         <boxGeometry args={[0.44, 0.44, 0.44]} />
         <meshStandardMaterial color="#fde68a" />
       </mesh>
+      {/* hair top */}
+      <mesh position={[0, 1.5, 0.04]}>
+        <boxGeometry args={[0.46, 0.12, 0.48]} />
+        <meshStandardMaterial color={hairColor} />
+      </mesh>
+      {/* female: long hair behind */}
+      {gender === 'female' && (
+        <mesh position={[0, 1.2, 0.26]}>
+          <boxGeometry args={[0.44, 0.52, 0.06]} />
+          <meshStandardMaterial color={hairColor} />
+        </mesh>
+      )}
       {/* eyes */}
       <mesh position={[-0.1, 1.27, -0.23]}>
         <boxGeometry args={[0.08, 0.08, 0.02]} />
@@ -462,14 +480,14 @@ function Player({ nearIdRef, onNearChange, productsWithPos, nearCashierRef, onNe
         <meshStandardMaterial color="#1e293b" />
       </mesh>
       {/* name tag */}
-      <Html position={[0, 1.8, 0]} center distanceFactor={10} style={{ pointerEvents: 'none' }}>
+      <Html position={[0, 1.85, 0]} center distanceFactor={10} style={{ pointerEvents: 'none' }}>
         <div style={{
           background: 'rgba(15,23,42,0.75)', color: '#e2e8f0',
           borderRadius: 6, padding: '2px 7px', fontSize: 10,
           fontFamily: 'system-ui,sans-serif', fontWeight: 600,
           whiteSpace: 'nowrap', backdropFilter: 'blur(4px)',
         }}>
-          🎒 Гравець
+          {gender === 'female' ? '👧' : '👦'} {displayName}
         </div>
       </Html>
     </group>
@@ -478,19 +496,23 @@ function Player({ nearIdRef, onNearChange, productsWithPos, nearCashierRef, onNe
 
 // ── Main ───────────────────────────────────────────────────────────────────
 export default function ShopScene3D() {
-  const { products, cart, addToCart, progress, setScreen, coins, scanned, cartLimit } = useGameStore();
+  const { products, cart, addToCart, progress, setScreen, coins, scanned, cartLimit, user } = useGameStore();
   const cartCount = cart.length;
   const cartFull = cartCount >= cartLimit;
+  const cartEmpty = cartCount === 0;
   const [nearId, setNearId] = useState(null);
   const [nearCashier, setNearCashier] = useState(false);
   const nearIdRef = useRef(null);
   const nearCashierRef = useRef(false);
+  const cartEmptyRef = useRef(cartEmpty);
+  useEffect(() => { cartEmptyRef.current = cartEmpty; }, [cartEmpty]);
 
   // E / Space key → pick up product OR go to cashier
   useEffect(() => {
     function onKey(e) {
       if (e.key !== 'e' && e.key !== 'E' && e.key !== ' ') return;
       if (nearCashierRef.current) {
+        if (cartEmptyRef.current) return;
         setScreen('cart');
       } else if (nearIdRef.current) {
         addToCart(nearIdRef.current);
@@ -547,7 +569,7 @@ export default function ShopScene3D() {
           />
         ))}
 
-        <CashierNPC nearCashier={nearCashier} />
+        <CashierNPC nearCashier={nearCashier} cartEmpty={cartEmpty} />
         <CashRegister />
 
         <Player
@@ -556,6 +578,8 @@ export default function ShopScene3D() {
           productsWithPos={interactableProducts}
           nearCashierRef={nearCashierRef}
           onNearCashierChange={handleNearCashier}
+          gender={user?.gender ?? 'male'}
+          displayName={user ? user.firstName : 'Гравець'}
         />
       </Canvas>
 

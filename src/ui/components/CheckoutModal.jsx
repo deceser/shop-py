@@ -5,7 +5,8 @@ import OutputCard from './OutputCard';
 import CodeCard from './CodeCard';
 import { useGameStore } from '../../game/store';
 import { evaluateCard, calcScore } from '../../game/evaluate';
-import { saveAttempt, upsertProgress } from '../../supabase/client';
+import { saveAttempt, upsertProgress, updateCoins } from '../../supabase/client';
+import { useGameStore as _store } from '../../game/store';
 
 const CATEGORY_COLORS = {
   'Теорія': 'bg-blue-500/20 text-blue-300 border-blue-500/30',
@@ -51,6 +52,7 @@ export default function CheckoutModal({ onDone }) {
     }
 
     if (user) {
+      const newCoins = _store.getState().coins;
       await Promise.all([
         saveAttempt({
           userId: user.id,
@@ -67,6 +69,7 @@ export default function CheckoutModal({ onDone }) {
           score,
           durationMs,
         }),
+        isCorrect && updateCoins(user.id, newCoins),
       ]);
     }
 

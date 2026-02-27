@@ -1,6 +1,6 @@
 import { useEffect, useState, Suspense, lazy } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { supabase, loadProgress, ensureProfile } from './supabase/client';
+import { loadProfileById, loadProgress, getSavedUserId } from './supabase/client';
 import { useGameStore } from './game/store';
 import LoginScreen from './ui/screens/LoginScreen';
 import CheckoutScreen from './ui/screens/CheckoutScreen';
@@ -19,40 +19,31 @@ const Loader = () => (
 );
 
 export default function App() {
-  const { user, setUser, screen, setProgress } = useGameStore();
+  const { user, setUser, setCoins, screen, setProgress } = useGameStore();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function init() {
-      if (!supabase) { setLoading(false); return; }
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        setUser(session.user);
-        const prog = await loadProgress(session.user.id);
-        setProgress(prog);
+      const savedId = getSavedUserId();
+      if (savedId) {
+        const profile = await loadProfileById(savedId);
+        if (profile) {
+          setUser(profile);
+          setCoins(profile.coins ?? 0);
+          const prog = await loadProgress(savedId);
+          setProgress(prog);
+        }
       }
       setLoading(false);
     }
     init();
-
-    if (!supabase) return;
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_ev, session) => {
-      if (session?.user) {
-        setUser(session.user);
-        const prog = await loadProgress(session.user.id);
-        setProgress(prog);
-      }
-    });
-    return () => subscription.unsubscribe();
   }, []);
 
-  async function handleLogin(u, username) {
+  async function handleLogin(u) {
     setUser(u);
-    if (supabase && !u.id.startsWith('local-')) {
-      await ensureProfile(u.id, username);
-      const prog = await loadProgress(u.id);
-      setProgress(prog);
-    }
+    setCoins(u.coins ?? 0);
+    const prog = await loadProgress(u.id);
+    setProgress(prog);
   }
 
   if (loading) return <Loader />;

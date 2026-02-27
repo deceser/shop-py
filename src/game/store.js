@@ -35,6 +35,7 @@ export const useGameStore = create((set, get) => ({
 
   // total coins
   coins: 0,
+  setCoins: (n) => set({ coins: n }),
   addCoins: (n) => set((s) => ({ coins: s.coins + n })),
 
   // combo

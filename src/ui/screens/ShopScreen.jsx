@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { useGameStore } from '../../game/store';
-import { getGrade, GRADE_SCALE, TOTAL_COINS } from '../../data/cards';
+import { TOTAL_COINS } from '../../data/cards';
 
 const container = {
   hidden: {},
@@ -12,10 +12,8 @@ const item = {
 };
 
 export default function ShopScreen() {
-  const { products, cart, addToCart, setScreen, coins, scanned } = useGameStore();
+  const { products, cart, addToCart, removeFromCart, setScreen, coins, scanned } = useGameStore();
   const cartCount = cart.length;
-  const grade = getGrade(coins);
-  const nextGrade = GRADE_SCALE.find((g) => g.grade === grade + 1);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 pb-24">
@@ -27,15 +25,7 @@ export default function ShopScreen() {
             <p className="text-xs text-slate-400">Натисни на товар, щоб додати до кошика</p>
           </div>
           <div className="flex items-center gap-3">
-            <div className="text-right">
-              <div className="text-sm font-semibold text-yellow-300">🪙 {coins} / {TOTAL_COINS}</div>
-              <div className="text-xs text-slate-400">
-                Оцінка: <span className="font-bold text-green-400">{grade}/12</span>
-                {nextGrade && (
-                  <span className="ml-1 text-slate-500">→ {nextGrade.grade}б від {nextGrade.min}🪙</span>
-                )}
-              </div>
-            </div>
+            <div className="text-sm font-semibold text-yellow-300">🪙 {coins} / {TOTAL_COINS}</div>
             {cartCount > 0 && (
               <motion.button
                 initial={{ scale: 0 }}
@@ -71,7 +61,7 @@ export default function ShopScreen() {
               variants={item}
               whileHover={!bought ? { scale: 1.05 } : {}}
               whileTap={!bought ? { scale: 0.95 } : {}}
-              onClick={() => !bought && addToCart(p.id)}
+              onClick={() => !bought && (inCart ? removeFromCart(p.id) : addToCart(p.id))}
               disabled={bought}
               className={`relative flex flex-col items-center gap-1 rounded-2xl border-2 p-3 text-center transition-colors
                 ${bought
