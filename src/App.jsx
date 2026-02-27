@@ -1,6 +1,6 @@
 import { useEffect, useState, Suspense, lazy } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { loadProfileById, loadProgress, getSavedUserId } from './supabase/client';
+import { loadProfileById, loadProgress, getSavedUserId, setOnline, supabaseUrl, supabaseKey } from './supabase/client';
 import { useGameStore } from './game/store';
 import LoginScreen from './ui/screens/LoginScreen';
 import CheckoutScreen from './ui/screens/CheckoutScreen';
@@ -28,6 +28,7 @@ export default function App() {
       if (savedId) {
         const profile = await loadProfileById(savedId);
         if (profile) {
+          await setOnline(savedId, true);
           setUser(profile);
           setCoins(profile.coins ?? 0);
           const prog = await loadProgress(savedId);
@@ -38,6 +39,29 @@ export default function App() {
     }
     init();
   }, []);
+
+  useEffect(() => {
+    if (!user || user.id.startsWith('local-')) return;
+    const handleUnload = () => {
+      if (!supabaseUrl || !supabaseKey) return;
+      fetch(`${supabaseUrl}/rest/v1/profiles?id=eq.${user.id}`, {
+        method: 'PATCH',
+        headers: {
+          apikey: supabaseKey,
+          Authorization: `Bearer ${supabaseKey}`,
+          'Content-Type': 'application/json',
+          Prefer: 'return=minimal',
+        },
+        body: JSON.stringify({ is_online: false }),
+        keepalive: true,
+      });
+    };
+    window.addEventListener('beforeunload', handleUnload);
+    window.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') handleUnload();
+    });
+    return () => window.removeEventListener('beforeunload', handleUnload);
+  }, [user]);
 
   async function handleLogin(u) {
     setUser(u);

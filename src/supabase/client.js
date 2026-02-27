@@ -4,6 +4,8 @@ const url = import.meta.env.VITE_SUPABASE_URL ?? '';
 const key = import.meta.env.VITE_SUPABASE_ANON_KEY ?? '';
 
 export const supabase = url && key ? createClient(url, key) : null;
+export const supabaseUrl = url;
+export const supabaseKey = key;
 
 const USER_KEY = 'pythonmarket_user_id';
 
@@ -24,6 +26,7 @@ export async function loginStudent(firstName, lastName, gender) {
     .maybeSingle();
 
   if (existing) {
+    await supabase.from('profiles').update({ is_online: true }).eq('id', existing.id);
     localStorage.setItem(USER_KEY, existing.id);
     return {
       id: existing.id,
@@ -41,6 +44,7 @@ export async function loginStudent(firstName, lastName, gender) {
     .single();
 
   if (error) throw error;
+  await supabase.from('profiles').update({ is_online: true }).eq('id', created.id);
   localStorage.setItem(USER_KEY, created.id);
   return {
     id: created.id,
@@ -85,6 +89,17 @@ export async function saveAttempt({ userId, cardId, answerText, isCorrect, score
     score,
     duration_ms: durationMs,
   });
+}
+
+export async function setOnline(userId, val) {
+  if (!supabase || userId?.startsWith('local-')) return;
+  await supabase.from('profiles').update({ is_online: val }).eq('id', userId);
+}
+
+export async function fetchOnlineStudents() {
+  if (!supabase) return [];
+  const { data } = await supabase.from('profiles').select('first_name, last_name').eq('is_online', true);
+  return data ?? [];
 }
 
 export async function upsertProgress({ userId, cardId, status, score, durationMs }) {

@@ -1,19 +1,27 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { STUDENTS } from '../../data/students';
-import { loginStudent } from '../../supabase/client';
+import { loginStudent, fetchOnlineStudents } from '../../supabase/client';
 
 export default function LoginScreen({ onLogin }) {
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [onlineSet, setOnlineSet] = useState(new Set());
 
+  useEffect(() => {
+    fetchOnlineStudents().then((list) => {
+      setOnlineSet(new Set(list.map((s) => `${s.first_name}|${s.last_name}`)));
+    });
+  }, []);
+
+  const available = STUDENTS.filter((s) => !onlineSet.has(`${s.firstName}|${s.lastName}`));
   const filtered = query.length >= 1
-    ? STUDENTS.filter((s) =>
+    ? available.filter((s) =>
         `${s.firstName} ${s.lastName}`.toLowerCase().includes(query.toLowerCase()),
       )
-    : STUDENTS;
+    : available;
 
   async function handleLogin() {
     if (!selected) return;

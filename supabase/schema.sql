@@ -15,6 +15,7 @@ create table profiles (
   last_name  text not null,
   gender     text not null check (gender in ('male', 'female')),
   coins      int  not null default 0,
+  is_online  boolean not null default false,
   created_at timestamptz not null default now(),
   unique (first_name, last_name)
 );
