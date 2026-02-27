@@ -347,8 +347,80 @@ function StoreEnv() {
   );
 }
 
+// ── Virtual Joystick ───────────────────────────────────────────────────────
+function VirtualJoystick({ dirRef }) {
+  const outerRef = useRef();
+  const innerRef = useRef();
+  const active = useRef(false);
+  const center = useRef({ x: 0, y: 0 });
+  const RADIUS = 44;
+
+  function getCenter() {
+    const r = outerRef.current.getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  }
+
+  function update(clientX, clientY) {
+    const { x, y } = center.current;
+    const rx = clientX - x, ry = clientY - y;
+    const dist = Math.sqrt(rx * rx + ry * ry) || 1;
+    const clamp = Math.min(dist, RADIUS);
+    const nx = rx / dist, ny = ry / dist;
+    if (innerRef.current)
+      innerRef.current.style.transform = `translate(calc(-50% + ${nx * clamp}px), calc(-50% + ${ny * clamp}px))`;
+    dirRef.current = { dx: nx, dz: ny };
+  }
+
+  function reset() {
+    active.current = false;
+    dirRef.current = { dx: 0, dz: 0 };
+    if (innerRef.current) innerRef.current.style.transform = 'translate(-50%, -50%)';
+  }
+
+  useEffect(() => {
+    const el = outerRef.current;
+    if (!el) return;
+    const onStart = (e) => { e.preventDefault(); center.current = getCenter(); active.current = true; update(e.touches[0].clientX, e.touches[0].clientY); };
+    const onMove = (e) => { e.preventDefault(); if (active.current) update(e.touches[0].clientX, e.touches[0].clientY); };
+    el.addEventListener('touchstart', onStart, { passive: false });
+    el.addEventListener('touchmove', onMove, { passive: false });
+    el.addEventListener('touchend', reset);
+    el.addEventListener('touchcancel', reset);
+    return () => {
+      el.removeEventListener('touchstart', onStart);
+      el.removeEventListener('touchmove', onMove);
+      el.removeEventListener('touchend', reset);
+      el.removeEventListener('touchcancel', reset);
+    };
+  }, []);
+
+  return (
+    <div
+      ref={outerRef}
+      style={{
+        position: 'absolute', bottom: 100, left: 24,
+        width: 120, height: 120, borderRadius: '50%',
+        background: 'rgba(15,23,42,0.5)',
+        border: '2px solid rgba(255,255,255,0.2)',
+        backdropFilter: 'blur(8px)',
+        touchAction: 'none', userSelect: 'none',
+      }}
+    >
+      <div ref={innerRef} style={{
+        position: 'absolute', top: '50%', left: '50%',
+        width: 48, height: 48, borderRadius: '50%',
+        background: 'rgba(124,58,237,0.8)',
+        border: '2px solid rgba(167,139,250,0.9)',
+        transform: 'translate(-50%, -50%)',
+        pointerEvents: 'none',
+        boxShadow: '0 0 14px rgba(124,58,237,0.55)',
+      }} />
+    </div>
+  );
+}
+
 // ── Player ─────────────────────────────────────────────────────────────────
-function Player({ nearIdRef, onNearChange, productsWithPos, nearCashierRef, onNearCashierChange, gender, displayName }) {
+function Player({ nearIdRef, onNearChange, productsWithPos, nearCashierRef, onNearCashierChange, gender, displayName, touchDirRef }) {
   const bodyColor = gender === 'female' ? '#ec4899' : '#3b82f6';
   const legColor = gender === 'female' ? '#be185d' : '#1d4ed8';
   const hairColor = gender === 'female' ? '#f472b6' : '#92400e';
@@ -372,10 +444,15 @@ function Player({ nearIdRef, onNearChange, productsWithPos, nearCashierRef, onNe
     const k = keys.current;
 
     let dx = 0, dz = 0;
-    if (k.has('w') || k.has('arrowup')) dz -= 1;
-    if (k.has('s') || k.has('arrowdown')) dz += 1;
-    if (k.has('a') || k.has('arrowleft')) dx -= 1;
-    if (k.has('d') || k.has('arrowright')) dx += 1;
+    const td = touchDirRef?.current;
+    if (td && (td.dx !== 0 || td.dz !== 0)) {
+      dx = td.dx; dz = td.dz;
+    } else {
+      if (k.has('w') || k.has('arrowup')) dz -= 1;
+      if (k.has('s') || k.has('arrowdown')) dz += 1;
+      if (k.has('a') || k.has('arrowleft')) dx -= 1;
+      if (k.has('d') || k.has('arrowright')) dx += 1;
+    }
 
     const moving = dx !== 0 || dz !== 0;
     if (moving) {
@@ -505,22 +582,28 @@ export default function ShopScene3D() {
   const nearIdRef = useRef(null);
   const nearCashierRef = useRef(false);
   const cartEmptyRef = useRef(cartEmpty);
+  const touchDirRef = useRef({ dx: 0, dz: 0 });
+  const isTouch = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
   useEffect(() => { cartEmptyRef.current = cartEmpty; }, [cartEmpty]);
+
+  const handleAction = useCallback(() => {
+    if (nearCashierRef.current) {
+      if (cartEmptyRef.current) return;
+      setScreen('cart');
+    } else if (nearIdRef.current) {
+      addToCart(nearIdRef.current);
+    }
+  }, [addToCart, setScreen]);
 
   // E / Space key → pick up product OR go to cashier
   useEffect(() => {
     function onKey(e) {
       if (e.key !== 'e' && e.key !== 'E' && e.key !== ' ') return;
-      if (nearCashierRef.current) {
-        if (cartEmptyRef.current) return;
-        setScreen('cart');
-      } else if (nearIdRef.current) {
-        addToCart(nearIdRef.current);
-      }
+      handleAction();
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [addToCart, setScreen]);
+  }, [handleAction]);
 
   const MAX_PRODUCTS = SHELF_Z.length * 5;
 
@@ -544,11 +627,11 @@ export default function ShopScene3D() {
   const handleNearCashier = useCallback((v) => setNearCashier(v), []);
 
   return (
-    <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
+    <div style={{ width: '100vw', height: '100vh', position: 'relative', touchAction: 'none' }}>
       <Canvas
         camera={{ position: [0, 11, 14], fov: 55 }}
         gl={{ antialias: true }}
-        style={{ background: '#e8edf2' }}
+        style={{ background: '#e8edf2', touchAction: 'none' }}
       >
         <ambientLight intensity={2.8} />
         <directionalLight position={[0, 10, 2]} intensity={1.2} />
@@ -580,6 +663,7 @@ export default function ShopScene3D() {
           onNearCashierChange={handleNearCashier}
           gender={user?.gender ?? 'male'}
           displayName={user ? user.firstName : 'Гравець'}
+          touchDirRef={touchDirRef}
         />
       </Canvas>
 
@@ -587,22 +671,22 @@ export default function ShopScene3D() {
       <div style={{
         position: 'absolute', top: 0, left: 0, right: 0,
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        padding: '14px 18px', pointerEvents: 'none',
+        padding: '10px 14px', pointerEvents: 'none',
       }}>
         <div style={{
           background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)',
           border: '1px solid #e2e8f0', borderRadius: 12,
-          padding: '7px 14px', color: '#1e293b',
-          fontFamily: 'system-ui,sans-serif', fontSize: 15, fontWeight: 700,
+          padding: '6px 12px', color: '#1e293b',
+          fontFamily: 'system-ui,sans-serif', fontSize: 13, fontWeight: 700,
         }}>
           🛒 Python Market
         </div>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <div style={{
             background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)',
             border: '1px solid #e2e8f0', borderRadius: 12,
-            padding: '7px 14px', color: '#92400e',
-            fontFamily: 'system-ui,sans-serif', fontSize: 14, fontWeight: 600,
+            padding: '6px 12px', color: '#92400e',
+            fontFamily: 'system-ui,sans-serif', fontSize: 13, fontWeight: 600,
           }}>
             🪙 {coins}
           </div>
@@ -610,28 +694,58 @@ export default function ShopScene3D() {
             <div style={{
               background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)',
               border: '1px solid #e2e8f0', borderRadius: 12,
-              padding: '7px 14px', color: '#475569',
-              fontFamily: 'system-ui,sans-serif', fontSize: 13,
+              padding: '6px 12px', color: '#475569',
+              fontFamily: 'system-ui,sans-serif', fontSize: 12,
             }}>
-              🛒 {cartCount} — підійди до касирші
+              🛒 {cartCount}
             </div>
           )}
         </div>
       </div>
 
+      {/* Touch controls */}
+      {isTouch && (
+        <>
+          <VirtualJoystick dirRef={touchDirRef} />
+          <button
+            onTouchStart={(e) => { e.preventDefault(); handleAction(); }}
+            onClick={handleAction}
+            style={{
+              position: 'absolute', bottom: 100, right: 24,
+              width: 76, height: 76, borderRadius: '50%',
+              background: nearCashier
+                ? 'rgba(124,58,237,0.85)'
+                : nearId ? 'rgba(124,58,237,0.85)' : 'rgba(15,23,42,0.45)',
+              border: '2px solid rgba(167,139,250,0.9)',
+              backdropFilter: 'blur(8px)',
+              color: '#fff', fontSize: 28, fontWeight: 700,
+              fontFamily: 'system-ui,sans-serif',
+              touchAction: 'none', userSelect: 'none', cursor: 'pointer',
+              boxShadow: '0 0 16px rgba(124,58,237,0.5)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              pointerEvents: 'auto',
+            }}
+          >
+            ✓
+          </button>
+        </>
+      )}
+
       {/* controls hint */}
       <div style={{
-        position: 'absolute', bottom: 18, left: 0, right: 0,
+        position: 'absolute', bottom: 18, left: isTouch ? 168 : 0, right: isTouch ? 120 : 0,
         textAlign: 'center', pointerEvents: 'none',
       }}>
         <div style={{
           display: 'inline-block',
           background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(6px)',
           border: '1px solid #e2e8f0', borderRadius: 10,
-          padding: '6px 16px', color: '#475569',
-          fontFamily: 'system-ui,sans-serif', fontSize: 13,
+          padding: '5px 12px', color: '#475569',
+          fontFamily: 'system-ui,sans-serif', fontSize: 12,
         }}>
-          WASD / ↑↓←→ — рух &nbsp;•&nbsp; E або Пробіл — взяти товар
+          {isTouch
+            ? 'Джойстик — рух  •  ✓ — взяти товар'
+            : 'WASD / ↑↓←→ — рух  •  E або Пробіл — взяти товар'}
         </div>
       </div>
     </div>

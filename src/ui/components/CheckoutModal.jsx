@@ -87,7 +87,7 @@ export default function CheckoutModal({ onDone }) {
         initial={{ scale: 0.9, y: 20 }}
         animate={{ scale: 1, y: 0 }}
         exit={{ scale: 0.9, y: 20 }}
-        className="w-full max-w-lg rounded-2xl bg-slate-800 border border-white/10 shadow-2xl overflow-hidden"
+        className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-slate-800 border border-white/10 shadow-2xl"
       >
         <div className="flex items-center gap-3 border-b border-white/10 px-5 py-4">
           <span className="text-3xl">{activeProduct?.emoji}</span>

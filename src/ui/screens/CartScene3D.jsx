@@ -1,6 +1,6 @@
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Billboard, Html } from '@react-three/drei';
-import { useRef, useMemo, useState } from 'react';
+import { useRef, useMemo, useState, useEffect } from 'react';
 import * as THREE from 'three';
 import { useGameStore } from '../../game/store';
 
@@ -71,7 +71,7 @@ function makeCartTex(emoji, name, qty, done, hovered) {
 }
 
 // ── Belt product card ──────────────────────────────────────────────────────
-function BeltProduct({ product, qty, position, done, onScan, onRemove, modalOpen }) {
+function BeltProduct({ product, qty, position, done, onScan, onRemove, modalOpen, isMobile }) {
   const [hovered, setHovered] = useState(false);
   const mesh = useRef();
 
@@ -98,12 +98,13 @@ function BeltProduct({ product, qty, position, done, onScan, onRemove, modalOpen
         <meshBasicMaterial map={tex} transparent side={THREE.DoubleSide} />
       </mesh>
       {!modalOpen && (
-        <Html center position={[-0.62, 0.62, 0]} distanceFactor={9}>
+        <Html center position={[-0.62, 0.62, 0]} distanceFactor={isMobile ? 6 : 9}>
           <button
             onClick={(e) => { e.stopPropagation(); onRemove(product.id); }}
             style={{
               background: '#ef4444', color: '#fff', border: 'none', borderRadius: '50%',
-              width: 22, height: 22, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+              width: isMobile ? 32 : 22, height: isMobile ? 32 : 22,
+              fontSize: isMobile ? 16 : 13, fontWeight: 700, cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               boxShadow: '0 2px 6px rgba(239,68,68,0.6)', lineHeight: 1,
             }}
@@ -275,13 +276,6 @@ function StoreEnv() {
           <meshStandardMaterial color="#f1f5f9" />
         </mesh>
       ))}
-      {/* fluorescent lights */}
-      {[-3, 0, 3].map((x) => (
-        <mesh key={x} position={[x, 4.9, 0]}>
-          <boxGeometry args={[0.2, 0.05, 8]} />
-          <meshStandardMaterial color="#fff" emissive="#e0f2fe" emissiveIntensity={0.8} />
-        </mesh>
-      ))}
       {/* floor mat */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.002, 5]}>
         <planeGeometry args={[9, 1.6]} />
@@ -296,13 +290,23 @@ export default function CartScene3D() {
   const { cart, products, progress, screen, openCheckout, removeFromCart, setScreen, coins } = useGameStore();
   const modalOpen = screen === 'checkout';
 
+  const [vp, setVp] = useState({ w: window.innerWidth, h: window.innerHeight });
+  useEffect(() => {
+    const fn = () => setVp({ w: window.innerWidth, h: window.innerHeight });
+    window.addEventListener('resize', fn);
+    return () => window.removeEventListener('resize', fn);
+  }, []);
+  const isPortrait = vp.h > vp.w;
+  const isMobile = vp.w < 768;
+  const camPos = isPortrait ? [0, 7, 9] : [0, 9, 8];
+  const camFov = isPortrait ? 65 : 52;
 
   return (
-    <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
+    <div style={{ width: '100vw', height: '100vh', position: 'relative', touchAction: 'none' }}>
       <Canvas
-        camera={{ position: [0, 9, 8], fov: 52 }}
+        camera={{ position: camPos, fov: camFov }}
         gl={{ antialias: true }}
-        style={{ background: '#e8edf2' }}
+        style={{ background: '#e8edf2', touchAction: 'none' }}
       >
         <ambientLight intensity={2.8} />
         <directionalLight position={[0, 10, 3]} intensity={1.2} />
@@ -315,7 +319,7 @@ export default function CartScene3D() {
         <CashRegister />
 
         {cart.length === 0 && (
-          <Html position={[-1.5, 1.8, 0]} center distanceFactor={8} style={{ pointerEvents: 'none' }}>
+          <Html position={[0, 1.8, 0]} center distanceFactor={8} style={{ pointerEvents: 'none' }}>
             <div style={{
               textAlign: 'center', color: '#94a3b8',
               fontFamily: 'system-ui,sans-serif',
@@ -329,7 +333,7 @@ export default function CartScene3D() {
         {cart.map((item, i) => {
           const p = products.find((pr) => pr.id === item.productId);
           if (!p) return null;
-          const x = -2.8 + i * 1.25;
+          const x = (i - (cart.length - 1) / 2) * (isMobile ? 0.9 : 1.15);
           const done = progress[p.cardId]?.status === 'done';
           return (
             <BeltProduct
@@ -341,6 +345,7 @@ export default function CartScene3D() {
               onScan={openCheckout}
               onRemove={removeFromCart}
               modalOpen={modalOpen}
+              isMobile={isMobile}
             />
           );
         })}
@@ -350,7 +355,7 @@ export default function CartScene3D() {
       <div style={{
         position: 'absolute', top: 0, left: 0, right: 0,
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        padding: '14px 18px', pointerEvents: 'none',
+        padding: '10px 14px', pointerEvents: 'none',
       }}>
         <button
           onClick={() => setScreen('shop')}
@@ -358,37 +363,36 @@ export default function CartScene3D() {
             pointerEvents: 'auto', cursor: 'pointer',
             background: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(8px)',
             border: '1px solid #e2e8f0', borderRadius: 12,
-            color: '#475569', padding: '8px 16px',
-            fontFamily: 'system-ui,sans-serif', fontSize: 14, fontWeight: 600,
+            color: '#475569', padding: '7px 14px',
+            fontFamily: 'system-ui,sans-serif', fontSize: 13, fontWeight: 600,
           }}
         >
           ← Назад
         </button>
 
-        <div style={{ display: 'flex', gap: 10 }}>
-          <div style={{
-            background: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(8px)',
-            border: '1px solid #e2e8f0', borderRadius: 12,
-            padding: '8px 14px', color: '#92400e',
-            fontFamily: 'system-ui,sans-serif', fontSize: 14, fontWeight: 600,
-          }}>
-            🪙 {coins}
-          </div>
+        <div style={{
+          background: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(8px)',
+          border: '1px solid #e2e8f0', borderRadius: 12,
+          padding: '7px 12px', color: '#92400e',
+          fontFamily: 'system-ui,sans-serif', fontSize: 13, fontWeight: 600,
+        }}>
+          🪙 {coins}
         </div>
       </div>
 
       <div style={{
         position: 'absolute', bottom: 18, left: 0, right: 0,
         textAlign: 'center', pointerEvents: 'none',
+        padding: '0 16px',
       }}>
         <div style={{
           display: 'inline-block',
           background: 'rgba(255,255,255,0.82)', backdropFilter: 'blur(6px)',
           border: '1px solid #e2e8f0', borderRadius: 10,
-          padding: '6px 16px', color: '#475569',
-          fontFamily: 'system-ui,sans-serif', fontSize: 13,
+          padding: '5px 14px', color: '#475569',
+          fontFamily: 'system-ui,sans-serif', fontSize: 12,
         }}>
-          Натисни на товар щоб відповісти на питання і просканувати
+          {isPortrait ? '👆 Натисни на товар щоб просканувати' : 'Натисни на товар щоб відповісти на питання і просканувати'}
         </div>
       </div>
     </div>
