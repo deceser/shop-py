@@ -77,12 +77,12 @@ export default function App() {
   }
 
   if (loading) return <Loader />;
-  if (user) return <HomeScreen onLogin={handleLogin} />;
+  // if (user) return <HomeScreen onLogin={handleLogin} />;
 
   return (
     <div style={{ width: '100vw', height: '100vh', overflow: 'hidden', background: '#0f172a' }}>
       <Suspense fallback={<Loader />}>
-        <AnimatePresence mode="wait">
+        {/* <AnimatePresence mode="wait">
           {screen === 'shop' && <ShopScene3D key="shop" />}
           {screen === 'cart' && <CartScene3D key="cart" />}
           {(screen === 'checkout' || screen === 'result') && (
@@ -93,7 +93,8 @@ export default function App() {
               <CheckoutScreen />
             </div>
           )}
-        </AnimatePresence>
+        </AnimatePresence> */}
+        <HomeScreen onLogin={handleLogin} />
       </Suspense>
     </div>
   );
