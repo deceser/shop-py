@@ -1,5 +1,23 @@
 @import "tailwindcss";
 
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.typing-cursor {
+  border-left: 2px solid #a78bfa;
+  margin-left: -1px;
+  animation: blink 1s step-end infinite;
+}
+
+.typing-error {
+  border-left-color: #f87171;
+  color: #f87171 !important;
+  background-color: rgba(239, 68, 68, 0.2);
+  border-radius: 2px;
+}
+
 @layer base {
   * {
     box-sizing: border-box;
