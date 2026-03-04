@@ -58,7 +58,7 @@ export const useGameStore = create((set, get) => ({
     set((s) => ({ cart: s.cart.filter((i) => i.productId !== productId) })),
   clearCart: () => set({ cart: [] }),
 
-  // screen: 'shop' | 'cart' | 'checkout' | 'result'
+  // screen: 'shop' | 'cart' | 'checkout' | 'result' | 'dungeon'
   screen: 'shop',
   setScreen: (screen) => set({ screen }),
 

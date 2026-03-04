@@ -430,13 +430,15 @@ function Player({ nearIdRef, onNearChange, productsWithPos, nearCashierRef, onNe
   const camPos = useRef(new THREE.Vector3(0, 12, 14));
   const stepT = useRef(0);
 
+  const user = useGameStore((s) => s.user);
+
   useEffect(() => {
-    const dn = (e) => keys.current.add(e.key.toLowerCase());
+    const dn = (e) => { if (user) keys.current.add(e.key.toLowerCase()); };
     const up = (e) => keys.current.delete(e.key.toLowerCase());
     window.addEventListener('keydown', dn);
     window.addEventListener('keyup', up);
     return () => { window.removeEventListener('keydown', dn); window.removeEventListener('keyup', up); };
-  }, []);
+  }, [user]);
 
   useFrame((_, dt) => {
     if (!groupRef.current) return;
@@ -682,6 +684,22 @@ export default function ShopScene3D() {
           🛒 Python Market
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <button
+            onClick={() => coins >= 1000 && setScreen('dungeon')}
+            title={coins < 1000 ? `Потрібно 1000 монет (зараз ${coins})` : ''}
+            style={{
+              background: coins >= 1000 ? 'rgba(124,58,237,0.85)' : 'rgba(100,100,120,0.5)',
+              backdropFilter: 'blur(8px)',
+              border: `1px solid ${coins >= 1000 ? 'rgba(167,139,250,0.6)' : 'rgba(150,150,170,0.3)'}`,
+              borderRadius: 12,
+              padding: '6px 12px',
+              color: coins >= 1000 ? '#ede9fe' : '#9ca3af',
+              fontFamily: 'system-ui,sans-serif', fontSize: 13, fontWeight: 600,
+              cursor: coins >= 1000 ? 'pointer' : 'not-allowed', pointerEvents: 'auto',
+            }}
+          >
+            {coins >= 1000 ? '🗺 Dungeon' : `🔒 Dungeon · 1000 🪙`}
+          </button>
           <div style={{
             background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)',
             border: '1px solid #e2e8f0', borderRadius: 12,

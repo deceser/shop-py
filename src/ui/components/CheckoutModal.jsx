@@ -3,6 +3,7 @@ import McqCard from './McqCard';
 import TextCard from './TextCard';
 import OutputCard from './OutputCard';
 import CodeCard from './CodeCard';
+import MoveCard from './MoveCard';
 import { useGameStore } from '../../game/store';
 import { evaluateCard, calcScore } from '../../game/evaluate';
 import { saveAttempt, upsertProgress, updateCoins } from '../../supabase/client';
@@ -13,6 +14,7 @@ const CATEGORY_COLORS = {
   'Що виведе?': 'bg-amber-500/20 text-amber-300 border-amber-500/30',
   'Напиши код': 'bg-green-500/20 text-green-300 border-green-500/30',
   'Вибір відповіді': 'bg-violet-500/20 text-violet-300 border-violet-500/30',
+  'Python Bot': 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
 };
 
 function renderPrompt(prompt) {
@@ -111,6 +113,7 @@ export default function CheckoutModal({ onDone }) {
           {activeCard.type === 'text' && <TextCard onSubmit={handleSubmit} />}
           {activeCard.type === 'output' && <OutputCard onSubmit={handleSubmit} />}
           {activeCard.type === 'code' && <CodeCard card={activeCard} onSubmit={handleSubmit} />}
+          {activeCard.type === 'move' && <MoveCard card={activeCard} onSubmit={handleSubmit} />}
         </div>
       </motion.div>
     </motion.div>
