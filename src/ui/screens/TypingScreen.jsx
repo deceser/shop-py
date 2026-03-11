@@ -70,6 +70,17 @@ export default function TypingScreen({ student }) {
       return;
     }
 
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const pos = typed.length;
+      let count = 0;
+      while (pos + count < text.length && text[pos + count] === ' ') count++;
+      if (count === 0) return;
+      if (!startTime) setStartTime(Date.now());
+      setTyped((prev) => [...prev, ...Array(count).fill(' ')]);
+      return;
+    }
+
     let char;
     if (e.key === 'Enter') char = '\n';
     else if (e.key.length === 1) char = e.key;
@@ -222,7 +233,7 @@ export default function TypingScreen({ student }) {
 
         {/* Code display */}
         <div
-          className="rounded-2xl border border-white/10 bg-slate-900 p-6 cursor-text"
+          className="rounded-2xl border border-white/10 bg-slate-900 p-6 cursor-text max-h-72 overflow-y-auto"
           onClick={() => wrapRef.current?.focus()}
         >
           <pre className="text-base font-mono leading-relaxed whitespace-pre">
