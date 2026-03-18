@@ -58,9 +58,16 @@ export const useGameStore = create((set, get) => ({
     set((s) => ({ cart: s.cart.filter((i) => i.productId !== productId) })),
   clearCart: () => set({ cart: [] }),
 
-  // screen: 'shop' | 'cart' | 'checkout' | 'result'
+  // screen: 'shop' | 'cart' | 'checkout' | 'result' | 'trainer'
   screen: 'shop',
   setScreen: (screen) => set({ screen }),
+  openTrainer: () => {
+    const { coins, setCoins, setScreen } = get();
+    if (coins >= 1000) {
+      setCoins(coins - 1000);
+      setScreen('trainer');
+    }
+  },
 
   // active checkout card
   activeCard: null,

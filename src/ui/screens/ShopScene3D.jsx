@@ -3,6 +3,7 @@ import { Billboard, Html } from '@react-three/drei';
 import { useRef, useState, useMemo, useEffect, useCallback } from 'react';
 import * as THREE from 'three';
 import { useGameStore } from '../../game/store';
+import { updateCoins } from '../../supabase/client';
 
 // ── Layout constants ───────────────────────────────────────────────────────
 const SHELF_Z = [5, 2.5, 0, -2, -4];
@@ -573,7 +574,7 @@ function Player({ nearIdRef, onNearChange, productsWithPos, nearCashierRef, onNe
 
 // ── Main ───────────────────────────────────────────────────────────────────
 export default function ShopScene3D() {
-  const { products, cart, addToCart, progress, setScreen, coins, scanned, cartLimit, user } = useGameStore();
+  const { products, cart, addToCart, progress, setScreen, coins, scanned, cartLimit, user, openTrainer } = useGameStore();
   const cartCount = cart.length;
   const cartFull = cartCount >= cartLimit;
   const cartEmpty = cartCount === 0;
@@ -682,6 +683,25 @@ export default function ShopScene3D() {
           🛒 Python Market
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          {coins >= 1000 && (
+            <button
+              onClick={async () => {
+                openTrainer();
+                if (user?.id && !user.id.startsWith('local-')) {
+                  await updateCoins(user.id, coins - 1000);
+                }
+              }}
+              style={{
+                background: 'rgba(124,58,237,0.9)', backdropFilter: 'blur(8px)',
+                border: '1px solid rgba(167,139,250,0.9)', borderRadius: 12,
+                padding: '6px 12px', color: '#fff',
+                fontFamily: 'system-ui,sans-serif', fontSize: 12, fontWeight: 600,
+                cursor: 'pointer', pointerEvents: 'auto',
+              }}
+            >
+              🐍 Тренажер (1000)
+            </button>
+          )}
           <div style={{
             background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)',
             border: '1px solid #e2e8f0', borderRadius: 12,
