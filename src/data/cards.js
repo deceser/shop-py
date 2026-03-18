@@ -8,6 +8,7 @@ export const cards = [
     prompt: 'Своїми словами: чим відрізняється змінна від константи в програмуванні?',
     keywordsAny: ['змін', 'незмін', 'const', 'фікс', 'постійн', 'не можна', 'завжди', 'однаков'],
     minHits: 1,
+    material: 'Змінна — це ім\'я для значення, яке можна змінювати під час виконання програми. Константа — значення, яке не змінюється після присвоєння (наприклад, const у JavaScript).',
   },
   {
     id: 't02',
@@ -17,6 +18,7 @@ export const cards = [
     prompt: 'Своїми словами: що означає ключове слово return у функції та навіщо воно потрібне?',
     keywordsAny: ['поверт', 'повертає', 'результ', 'вихід', 'значен', 'виклик', 'отрим', 'передає'],
     minHits: 1,
+    material: 'return повертає значення з функції та завершує її виконання. Без return функція поверне None. Результат можна використати при виклику: x = my_func().',
   },
   {
     id: 't03',
@@ -26,6 +28,7 @@ export const cards = [
     prompt: 'Своїми словами: чим list відрізняється від tuple в Python?',
     keywordsAny: ['змін', 'незмін', 'tuple', 'list', 'дужк', 'квадр', 'кругл', 'редаг', 'append', 'frozen'],
     minHits: 1,
+    material: 'list — змінюваний (mutable): можна додавати, видаляти, змінювати елементи. tuple — незмінюваний (immutable): після створення змінити не можна. list = [1,2], tuple = (1,2).',
   },
 
   // ── ЩО ВИВЕДЕ (output) ────────────────────────────────────────────────────
@@ -36,6 +39,7 @@ export const cards = [
     title: 'Множення',
     prompt: 'Що виведе цей код?\n\nprint(3 * 4)',
     answer: '12',
+    material: 'Оператор * — множення чисел. 3 * 4 = 12. print() виводить значення в консоль.',
   },
   {
     id: 'o02',
@@ -481,6 +485,11 @@ export function getGrade(coins) {
     if (coins >= min) return grade;
   }
   return 0;
+}
+
+export function getMaterial(card) {
+  if (card.material) return card.material;
+  return `${card.category}: ${card.title}.\n\nПройдено успішно!`;
 }
 
 export const PRODUCTS = [

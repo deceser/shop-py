@@ -2,8 +2,9 @@ import { useEffect, useState, Suspense, lazy } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { loadProfileById, loadProgress, getSavedUserId, setOnline, supabaseUrl, supabaseKey } from './supabase/client';
 import { useGameStore } from './game/store';
-import HomeScreen from './ui/screens/HomeScreen';
+import LoginScreen from './ui/screens/LoginScreen';
 import CheckoutScreen from './ui/screens/CheckoutScreen';
+import TrainerScreen from './ui/screens/TrainerScreen';
 
 const ShopScene3D = lazy(() => import('./ui/screens/ShopScene3D'));
 const CartScene3D = lazy(() => import('./ui/screens/CartScene3D'));
@@ -77,12 +78,13 @@ export default function App() {
   }
 
   if (loading) return <Loader />;
-  // if (user) return <HomeScreen onLogin={handleLogin} />;
+  if (!user) return <LoginScreen onLogin={handleLogin} />;
 
   return (
     <div style={{ width: '100vw', height: '100vh', overflow: 'hidden', background: '#0f172a' }}>
       <Suspense fallback={<Loader />}>
-        {/* <AnimatePresence mode="wait">
+        <AnimatePresence mode="wait">
+          {screen === 'trainer' && <TrainerScreen key="trainer" />}
           {screen === 'shop' && <ShopScene3D key="shop" />}
           {screen === 'cart' && <CartScene3D key="cart" />}
           {(screen === 'checkout' || screen === 'result') && (
@@ -93,8 +95,7 @@ export default function App() {
               <CheckoutScreen />
             </div>
           )}
-        </AnimatePresence> */}
-        <HomeScreen onLogin={handleLogin} />
+        </AnimatePresence>
       </Suspense>
     </div>
   );

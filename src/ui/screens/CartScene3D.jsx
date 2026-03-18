@@ -3,6 +3,7 @@ import { Billboard, Html } from '@react-three/drei';
 import { useRef, useMemo, useState, useEffect } from 'react';
 import * as THREE from 'three';
 import { useGameStore } from '../../game/store';
+import { updateCoins } from '../../supabase/client';
 
 // ── Tile floor texture ─────────────────────────────────────────────────────
 function makeTileTexture() {
@@ -287,7 +288,7 @@ function StoreEnv() {
 
 // ── Main ───────────────────────────────────────────────────────────────────
 export default function CartScene3D() {
-  const { cart, products, progress, screen, openCheckout, removeFromCart, setScreen, coins } = useGameStore();
+  const { cart, products, progress, screen, openCheckout, removeFromCart, setScreen, coins, openTrainer, user } = useGameStore();
   const modalOpen = screen === 'checkout';
 
   const [vp, setVp] = useState({ w: window.innerWidth, h: window.innerHeight });
@@ -369,6 +370,26 @@ export default function CartScene3D() {
         >
           ← Назад
         </button>
+
+        {coins >= 1000 && (
+          <button
+            onClick={async () => {
+              openTrainer();
+              if (user?.id && !user.id.startsWith('local-')) {
+                await updateCoins(user.id, coins - 1000);
+              }
+            }}
+            style={{
+              pointerEvents: 'auto', cursor: 'pointer',
+              background: 'rgba(124,58,237,0.9)', backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(167,139,250,0.9)', borderRadius: 12,
+              color: '#fff', padding: '7px 12px',
+              fontFamily: 'system-ui,sans-serif', fontSize: 12, fontWeight: 600,
+            }}
+          >
+            🐍 Тренажер (1000)
+          </button>
+        )}
 
         <div style={{
           background: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(8px)',
