@@ -1,13 +1,14 @@
 import { motion } from 'framer-motion';
 import { useGameStore } from '../../game/store';
-import { TOTAL_COINS } from '../../data/cards';
+import { TOTAL_COINS, getMaterial } from '../../data/cards';
 
 export default function ResultOverlay({ result, onContinue }) {
   const { coins } = useGameStore();
 
   if (!result) return null;
 
-  const { isCorrect, score, product, comboMult } = result;
+  const { isCorrect, score, product, card, comboMult } = result;
+  const material = isCorrect && card ? getMaterial(card) : null;
 
   return (
     <motion.div
@@ -45,6 +46,13 @@ export default function ResultOverlay({ result, onContinue }) {
                 ×{comboMult} комбо!
               </span>
             )}
+          </div>
+        )}
+
+        {material && (
+          <div className="mb-4 p-3 rounded-xl bg-white/5 border border-white/10 text-left">
+            <p className="text-xs text-slate-400 mb-1">Тема та матеріал:</p>
+            <p className="text-sm text-slate-300 whitespace-pre-wrap">{material}</p>
           </div>
         )}
 

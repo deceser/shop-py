@@ -54,7 +54,7 @@ export default function TypingScreen({ student }) {
   const elapsed = startTime ? ((endTime || now) - startTime) / 1000 : 0;
   const totalKeystrokes = typed.length + mistakes;
   const accuracy = totalKeystrokes > 0 ? Math.round((typed.length / totalKeystrokes) * 100) : 100;
-  const wpm = startTime && elapsed > 0 ? Math.round((typed.length / 5) / (elapsed / 60)) : 0;
+  const wpm = startTime && elapsed > 0 ? Math.round(typed.length / 5 / (elapsed / 60)) : 0;
   const elapsedDisplay = elapsed.toFixed(1) + 's';
 
   function handleKeyDown(e) {
@@ -178,8 +178,7 @@ export default function TypingScreen({ student }) {
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="rounded-2xl border border-white/10 bg-slate-800 p-10 w-full max-w-sm text-center shadow-2xl"
-        >
+          className="rounded-2xl border border-white/10 bg-slate-800 p-10 w-full max-w-sm text-center shadow-2xl">
           <div className="text-6xl mb-4">🏆</div>
           <h2 className="text-3xl font-bold text-white mb-2">Всі завдання виконано!</h2>
           <p className="text-slate-400 mb-8">
@@ -187,8 +186,7 @@ export default function TypingScreen({ student }) {
           </p>
           <button
             onClick={handleRestart}
-            className="rounded-xl bg-violet-600 py-3 w-full font-semibold text-white hover:bg-violet-500 transition-colors"
-          >
+            className="rounded-xl bg-violet-600 py-3 w-full font-semibold text-white hover:bg-violet-500 transition-colors">
             Почати спочатку
           </button>
         </motion.div>
@@ -201,8 +199,7 @@ export default function TypingScreen({ student }) {
       ref={wrapRef}
       tabIndex={0}
       onKeyDown={handleKeyDown}
-      className="min-h-screen bg-linear-to-b from-slate-900 to-slate-800 p-4 flex flex-col items-center focus:outline-none select-none"
-    >
+      className="min-h-screen bg-linear-to-b from-slate-900 to-slate-800 p-4 flex flex-col items-center focus:outline-none select-none">
       <div className="w-full max-w-3xl mt-8">
         {/* Top bar */}
         <div className="flex items-center justify-between mb-6">
@@ -221,7 +218,7 @@ export default function TypingScreen({ student }) {
         <div className="h-1.5 rounded-full bg-slate-700 overflow-hidden mb-8">
           <motion.div
             className="h-full rounded-full bg-violet-500"
-            animate={{ width: `${((snippetIndex) / SNIPPETS.length) * 100}%` }}
+            animate={{ width: `${(snippetIndex / SNIPPETS.length) * 100}%` }}
             transition={{ duration: 0.4 }}
           />
         </div>
@@ -235,8 +232,7 @@ export default function TypingScreen({ student }) {
           ].map(({ label, value, color }) => (
             <div
               key={label}
-              className="rounded-xl border border-white/10 bg-slate-800 p-4 text-center"
-            >
+              className="rounded-xl border border-white/10 bg-slate-800 p-4 text-center">
               <div className={`text-2xl font-bold ${color}`}>{value}</div>
               <div className="text-xs text-slate-400 mt-1">{label}</div>
             </div>
@@ -249,8 +245,7 @@ export default function TypingScreen({ student }) {
         {/* Code display */}
         <div
           className="rounded-2xl border border-white/10 bg-slate-900 p-6 cursor-text max-h-72 overflow-y-auto"
-          onClick={() => wrapRef.current?.focus()}
-        >
+          onClick={() => wrapRef.current?.focus()}>
           <pre className="text-base font-mono leading-relaxed whitespace-pre">
             {text.split('').map((char, i) => {
               const isTyped = i < typed.length;
@@ -268,8 +263,7 @@ export default function TypingScreen({ student }) {
                     isCurrent && !errorFlash ? 'text-white' : '',
                   ]
                     .filter(Boolean)
-                    .join(' ')}
-                >
+                    .join(' ')}>
                   {char === '\n' ? '↵\n' : char}
                 </span>
               );
@@ -286,9 +280,7 @@ export default function TypingScreen({ student }) {
           />
         </div>
 
-        <p className="text-center text-xs text-slate-600 mt-4">
-          Клацніть на поле та починайте друкувати
-        </p>
+        <p className="text-center text-xs text-slate-600 mt-4">Клацніть на поле та починайте друкувати</p>
       </div>
 
       {/* Results overlay */}
@@ -297,16 +289,12 @@ export default function TypingScreen({ student }) {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50"
-          >
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
             <motion.div
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
-              className="rounded-2xl border border-white/10 bg-slate-800 p-8 w-full max-w-sm text-center shadow-2xl"
-            >
-              <div className="text-5xl mb-2">
-                {accuracy === 100 ? '🏆' : accuracy >= 90 ? '🎉' : '💪'}
-              </div>
+              className="rounded-2xl border border-white/10 bg-slate-800 p-8 w-full max-w-sm text-center shadow-2xl">
+              <div className="text-5xl mb-2">{accuracy === 100 ? '🏆' : accuracy >= 90 ? '🎉' : '💪'}</div>
               <p className="text-slate-400 text-sm mb-5">{snippet.title}</p>
 
               <div className="grid grid-cols-3 gap-4 mb-8">
@@ -328,22 +316,19 @@ export default function TypingScreen({ student }) {
                 {snippetIndex + 1 < SNIPPETS.length ? (
                   <button
                     onClick={handleNext}
-                    className="rounded-xl bg-violet-600 py-3 font-semibold text-white hover:bg-violet-500 transition-colors"
-                  >
+                    className="rounded-xl bg-violet-600 py-3 font-semibold text-white hover:bg-violet-500 transition-colors">
                     Далі → ({snippetIndex + 2} / {SNIPPETS.length})
                   </button>
                 ) : (
                   <button
                     onClick={handleNext}
-                    className="rounded-xl bg-green-600 py-3 font-semibold text-white hover:bg-green-500 transition-colors"
-                  >
+                    className="rounded-xl bg-green-600 py-3 font-semibold text-white hover:bg-green-500 transition-colors">
                     Завершити 🏆
                   </button>
                 )}
                 <button
                   onClick={handleRetry}
-                  className="rounded-xl border border-white/10 py-2.5 text-sm text-slate-300 hover:bg-white/5 transition-colors"
-                >
+                  className="rounded-xl border border-white/10 py-2.5 text-sm text-slate-300 hover:bg-white/5 transition-colors">
                   Повторити
                 </button>
               </div>
