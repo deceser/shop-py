@@ -27,6 +27,7 @@ export default function TypingScreen({ student }) {
   const wrapRef = useRef(null);
   const tickRef = useRef(null);
   const flashRef = useRef(null);
+  const lastKeyRef = useRef(0);
 
   const isAllDone = snippetIndex >= SNIPPETS.length;
   const snippet = !isAllDone ? SNIPPETS[snippetIndex] : null;
@@ -57,6 +58,9 @@ export default function TypingScreen({ student }) {
   const elapsedDisplay = elapsed.toFixed(1) + 's';
 
   function handleKeyDown(e) {
+    if (!e.isTrusted) return;
+    const t = Date.now();
+    if (lastKeyRef.current && t - lastKeyRef.current < 30) return;
     if (finished || isAllDone) return;
 
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() !== 'backspace') {
@@ -66,6 +70,7 @@ export default function TypingScreen({ student }) {
 
     if (e.key === 'Backspace') {
       e.preventDefault();
+      lastKeyRef.current = t;
       setTyped((prev) => prev.slice(0, -1));
       return;
     }
@@ -76,6 +81,7 @@ export default function TypingScreen({ student }) {
       let count = 0;
       while (pos + count < text.length && text[pos + count] === ' ') count++;
       if (count === 0) return;
+      lastKeyRef.current = t;
       if (!startTime) setStartTime(Date.now());
       setTyped((prev) => [...prev, ...Array(count).fill(' ')]);
       return;
@@ -90,6 +96,7 @@ export default function TypingScreen({ student }) {
 
     const expected = text[typed.length];
     if (char !== expected) {
+      lastKeyRef.current = t;
       setMistakes((m) => m + 1);
       clearTimeout(flashRef.current);
       setErrorFlash(true);
@@ -97,6 +104,7 @@ export default function TypingScreen({ student }) {
       return;
     }
 
+    lastKeyRef.current = t;
     if (!startTime) setStartTime(Date.now());
     setTyped((prev) => [...prev, char]);
   }
@@ -104,6 +112,7 @@ export default function TypingScreen({ student }) {
   function handleNext() {
     const next = snippetIndex + 1;
     saveIndex(next);
+    lastKeyRef.current = 0;
     setSnippetIndex(next);
     setTyped([]);
     setStartTime(null);
@@ -117,6 +126,7 @@ export default function TypingScreen({ student }) {
   }
 
   function handleRetry() {
+    lastKeyRef.current = 0;
     setTyped([]);
     setStartTime(null);
     setEndTime(null);
@@ -130,6 +140,7 @@ export default function TypingScreen({ student }) {
 
   function handleRestart() {
     saveIndex(0);
+    lastKeyRef.current = 0;
     setSnippetIndex(0);
     setTyped([]);
     setStartTime(null);
@@ -144,6 +155,10 @@ export default function TypingScreen({ student }) {
 
   useEffect(() => {
     if (!finished || !startTime || !student) return;
+    if (wpm > 300) {
+      handleRetry();
+      return;
+    }
     const key = 'iw_results';
     const all = JSON.parse(localStorage.getItem(key) || '[]');
     all.push({
